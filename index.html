@@ -542,19 +542,19 @@ const KATEGORIEN = {
   oeffentlich: {
     betreff: "", personen: 6,
     brief: "vielen Dank für das angenehme Gespräch und Ihr Interesse an Wissensvermittlung. Wie besprochen erhalten Sie unser Angebot für die Schulung Ihres Teams – zur Tagespauschale, online oder an einem ppedv-Standort.\n\nAuf der folgenden Seite finden Sie alle Rahmendaten und die Preisübersicht. Gerne stimmen wir Inhalte und Schwerpunkte vorab mit Ihnen ab.",
-    rahmen: "Termin | nach Vereinbarung\nUnterlagen | Schulungsunterlagen\nZertifikat | ppedv Zertifikat für alle Teilnehmer",
+    rahmen: "Termin | nach Vereinbarung\nUnterlagen | Schulungsunterlagen\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive",
     positionen: "",
     produkt: { eyebrow: "Schulung · ppedv Kursprogramm", titel: "", untertitel: "Praxisnahe Schulung mit erfahrenen ppedv-Trainern – exklusiv für Ihr Team, live online oder an einem ppedv-Standort.",
       chips: "", nutzenTitel: "", nutzen: "", stepsIntro: "", steps: "", takeaways: "", zielgruppe: "", hinweis: "", link: "" }
   },
   inhouse: {
     personen: 10, brief: BRIEF_WORKSHOP,
-    rahmen: "Termin | nach Vereinbarung\nVorbereitung | Praxisfall & Ziele vorab mit dem Trainer\nUnterlagen | Slides & Samples (bei Verfügbarkeit)\nZertifikat | ppedv Zertifikat für alle Teilnehmer"
+    rahmen: "Termin | nach Vereinbarung\nVorbereitung | Praxisfall & Ziele vorab mit dem Trainer\nUnterlagen | Slides & Samples (bei Verfügbarkeit)\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive"
   },
   kompetenz: {
     betreff: "Ihr Angebot: Kompetenzmodell", personen: "",
     brief: "vielen Dank für das angenehme Gespräch und Ihr Interesse an Wissensvermittlung. Wie besprochen erhalten Sie unser Angebot für ein Kompetenzmodell, mit dem Ihr Team über mehrere Monate gezielt Wissen aufbaut.\n\nAuf den folgenden Seiten finden Sie Ihren Kursplan, den Projektablauf, alle Rahmendaten und die Preisübersicht. Gerne stimmen wir Inhalte und Zeitplan vorab mit Ihnen ab.",
-    rahmen: "Laufzeit | mehrere Monate\nFormat | Inhouse-Workshops vor Ort und online\nTermine | nach Vereinbarung\nZertifikat | ppedv Zertifikat für alle Teilnehmer",
+    rahmen: "Laufzeit | mehrere Monate\nFormat | Inhouse-Workshops vor Ort und online\nTermine | nach Vereinbarung\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive",
     positionen: "",
     produkt: { eyebrow: "Kompetenzmodell · Inhouse-Programm", titel: "Kompetenzen gezielt aufbauen – Schritt für Schritt.", untertitel: "Ein abgestimmtes Programm aus Inhouse-Workshops vor Ort und online, das Ihr Team über mehrere Monate begleitet.",
       chips: "mehrere Monate\nvor Ort & online\nindividuell geplant", nutzenTitel: "", nutzen: "", stepsIntro: "", steps: "", takeaways: "", zielgruppe: "", hinweis: "", link: "" }
@@ -638,10 +638,12 @@ function angebotAusMatrix(d, alt){
   applyKategorie(s, "kompetenz");
   if(num(d.preis)>0) s.schulung.preis = num(d.preis);
   s.reise.proTermin = num(d.anreise)||"";
-  s.rahmen = "Termine | genauer Termin je Kurs nach Absprache\nTeilnehmer je Kurs | bis zu 10 Personen im Preis enthalten\nZertifikat | ppedv Zertifikat für alle Teilnehmer";
-  s.produkt.steps = (s.matrix.phasen||[]).map(p=>(p.t||"")+" | "+(p.von&&p.bis?"Woche "+p.von+"–"+p.bis+" · ":"")+(p.ziel||"")).join("\n");
+  s.rahmen = "Termine | genauer Termin je Kurs nach Absprache\nTeilnehmer je Kurs | bis zu 10 Personen im Preis enthalten\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive";
+  s.produkt.steps = (s.matrix.phasen||[]).map(p=>(p.t||"")+" | "+(p.von&&p.bis?"Woche "+p.von+"–"+p.bis+" · ":"")+ungendern(p.ziel||"")).join("\n");
   return s;
 }
+// ppedv gendert nicht: Texte aus der Matrix für das Angebot angleichen
+function ungendern(t){ return String(t).replace(/Teilnehmende(n?)/g,"Teilnehmer").replace(/Mitarbeitende(n?)/g,"Mitarbeiter"); }
 function vorOrtTermine(s){ return s.matrix ? s.matrix.kurse.filter(c=>c.ort!=="online").length : 0; }
 function applyPreset(s,key){
   const p = PRESETS[key];
@@ -742,14 +744,14 @@ function render(){
   // Kategorie 3 mit Daten aus der Kompetenzmatrix
   const mx = kat==="kompetenz" && S.matrix && S.matrix.kurse.length ? S.matrix : null;
   const mxN = mx ? mx.kurse.length : 0, mxV = vorOrtTermine(S);
-  const mxChips = mx ? [mxN+" "+(mxN==1?"Kurs":"Kurse"), mx.wochen?mx.wochen+" Wochen":"", MATRIX_FORMATE[mx.format]||"", mx.mitarbeitende?mx.mitarbeitende+" Mitarbeitende":""].filter(Boolean) : [];
+  const mxChips = mx ? [mxN+" "+(mxN==1?"Kurs":"Kurse"), mx.wochen?mx.wochen+" Wochen":"", MATRIX_FORMATE[mx.format]||"", mx.mitarbeitende?mx.mitarbeitende+" Mitarbeiter":""].filter(Boolean) : [];
   const chips = (kat==="oeffentlich" ? [tageText(tage), "bis zu "+maxP+" Personen", sch.format==="online"?"online":"ppedv-Standort "+sch.standort] : mx ? mxChips : []).concat(mx ? [] : lines(p.chips));
   const teaser = kat==="oeffentlich" ? tageText(tage)+" · bis zu "+maxP+" Personen · Tagespauschale"
     : kat==="inhouse" ? "1 Tag · bis zu "+maxP+" Personen · Festpreis für Ihr Team"
     : mx ? mxN+" "+(mxN==1?"Kurs":"Kurse")+" × "+eur(num(sch.preis))+(mx.wochen?" · "+mx.wochen+" Wochen":"")
     : chips.slice(0,2).join(" · ");
   const auto = kat==="kompetenz"
-    ? (mx ? [["Laufzeit", mx.wochen?"ca. "+mx.wochen+" Wochen ab Zusage":"nach Absprache"], ["Kurse", mxN+(mxV&&mxV<mxN?" (davon "+mxV+" vor Ort)":"")], ["Format", MATRIX_FORMATE[mx.format]||""]].concat(mx.mitarbeitende?[["Mitarbeitende", String(mx.mitarbeitende)]]:[]) : [])
+    ? (mx ? [["Laufzeit", mx.wochen?"ca. "+mx.wochen+" Wochen ab Zusage":"nach Absprache"], ["Kurse", mxN+(mxV&&mxV<mxN?" (davon "+mxV+" vor Ort)":"")], ["Format", MATRIX_FORMATE[mx.format]||""]].concat(mx.mitarbeitende?[["Mitarbeiter", String(mx.mitarbeitende)]]:[]) : [])
     : [["Dauer", kat==="oeffentlich"?tageText(tage):"1 Tag"], ["Teilnehmer", persText], ["Format", formatText(S).replace(/^[ob]/,c=>c.toUpperCase())]];
   const rahmen = auto.concat(parts(S.rahmen));
   const nutzen = parts(p.nutzen), steps = parts(p.steps), take = parts(p.takeaways);
@@ -859,7 +861,7 @@ function render(){
 
     ${p.hinweis?`<div class="note"><b>Gut zu wissen:</b> ${esc(p.hinweis)}</div>`:""}
 
-    <div class="cond">Dieses Angebot ist <b>${esc(a.gueltig)} Tage gültig</b> (bis ${esc(dfmt(addDays(a.datum,a.gueltig)))}). Alle Preise verstehen sich zzgl. der gesetzlichen USt. Es gelten die <a href="${FIRMA.agb}">Allgemeinen Geschäftsbedingungen</a> der ppedv AG.
+    <div class="cond">Dieses Angebot ist <b>${esc(a.gueltig)} Tage gültig</b> (bis ${esc(dfmt(addDays(a.datum,a.gueltig)))}). Alle Preise verstehen sich zzgl. der gesetzlichen USt. Zahlungsbedingung: monatlich nach Leistungserbringung, 10 Tage netto. Es gelten die <a href="${FIRMA.agb}">Allgemeinen Geschäftsbedingungen</a> der ppedv AG.
     ${link?`<div class="link">Weitere Informationen: <a href="${esc(link)}">${esc(link.replace(/^https?:\/\//,""))}</a></div>`:""}</div>
 
     <div class="close">
