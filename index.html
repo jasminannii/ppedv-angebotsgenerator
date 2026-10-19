@@ -1,0 +1,1040 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ppedv Angebotsgenerator</title>
+<style>
+:root{
+  --navy:#1f2d52; --navy2:#2b4170; --orange:#ef7d2d; --orange-soft:#fdf0e6;
+  --ink:#1b2232; --muted:#5d6678; --line:#e2e6ee; --soft:#f4f6fa;
+  --ui-bg:#e9ecf2; --ui-panel:#ffffff; --ui-ink:#1b2232; --ui-muted:#667085; --ui-line:#d9dee7;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Segoe UI Variable Text","Segoe UI",Inter,system-ui,-apple-system,Arial,sans-serif;color:var(--ui-ink);background:var(--ui-bg)}
+
+/* ---------- App UI ---------- */
+.app{display:grid;grid-template-columns:420px 1fr;height:100vh}
+.side{background:var(--ui-panel);border-right:1px solid var(--ui-line);overflow:auto;display:flex;flex-direction:column}
+.side header{position:sticky;top:0;z-index:2;background:var(--navy);color:#fff;padding:14px 16px}
+.side header h1{margin:0;font-size:16px;font-weight:600;letter-spacing:.2px}
+.side header p{margin:2px 0 10px;font-size:12px;opacity:.75}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.btn{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;border-radius:7px;padding:6px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.btn:hover{background:rgba(255,255,255,.18)}
+.btn.primary{background:var(--orange);border-color:var(--orange);font-weight:600}
+.btn.primary:hover{filter:brightness(1.05)}
+.form{padding:6px 14px 40px}
+details{border-bottom:1px solid var(--ui-line);padding:4px 0}
+summary{cursor:pointer;font-weight:600;font-size:13.5px;padding:10px 2px;list-style:none;display:flex;justify-content:space-between}
+summary::after{content:"+";color:var(--ui-muted)}
+details[open] summary::after{content:"–"}
+label{display:block;font-size:11.5px;color:var(--ui-muted);margin:8px 0 3px;font-weight:500}
+label small{font-weight:400;opacity:.8}
+input,select,textarea{width:100%;border:1px solid var(--ui-line);border-radius:7px;padding:7px 9px;font:inherit;font-size:13px;color:var(--ui-ink);background:#fff}
+textarea{resize:vertical;min-height:64px;line-height:1.4}
+input:focus,select:focus,textarea:focus{outline:2px solid #b9c6e4;border-color:#8ea2cf}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row3{display:grid;grid-template-columns:90px 1fr 1fr;gap:8px}
+.check{display:flex;gap:8px;align-items:center;font-size:13px;margin-top:10px;color:var(--ui-ink)}
+.check input{width:auto}
+.preset{display:flex;gap:6px;margin:10px 0 2px}
+.preset button{flex:1;border:1px solid var(--ui-line);background:var(--soft);border-radius:7px;padding:8px;font:inherit;font-size:12.5px;cursor:pointer;text-align:left}
+.preset button:hover{border-color:var(--navy2)}
+.preset b{display:block;font-size:12.5px}
+.preset span{font-size:11px;color:var(--ui-muted)}
+.preset button.on{border-color:var(--orange);background:var(--orange-soft)}
+.sub{margin:12px 0 0;padding-top:8px;border-top:1px dashed var(--ui-line);font-size:12px;font-weight:600;color:var(--navy)}
+.hint.ok{color:#067647}
+.hint:empty{display:none}
+
+/* Schritte */
+.form{padding:10px 12px 20px;flex:1}
+details.fs{border:1px solid var(--ui-line);border-radius:10px;padding:2px 12px 12px;margin:0 0 10px;background:#fff}
+details.fs:not([open]){padding-bottom:2px}
+details.fs summary{align-items:center;gap:8px;justify-content:flex-start}
+details.fs summary::after{margin-left:8px}
+details.fs summary i.n{font-style:normal;flex:none;width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
+details.fs summary .sv{margin-left:auto;font-weight:400;font-size:11.5px;color:var(--ui-muted);max-width:55%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+details.fs summary .sv.need{color:#d92d20}
+details.fs summary .sv.ok{color:#067647}
+details.opt{background:var(--soft)}
+details.opt summary{font-weight:500;font-size:13px}
+details.opt summary::after{margin-left:auto}
+.opt-title{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ui-muted);font-weight:600;margin:18px 2px 8px}
+
+.choice{display:grid;gap:6px;margin-top:2px}
+.choice button{border:1px solid var(--ui-line);background:#fff;border-radius:8px;padding:9px 12px;font:inherit;text-align:left;cursor:pointer;display:flex;flex-direction:column}
+.choice button:hover{border-color:var(--navy2)}
+.choice button b{font-size:13.5px;color:var(--navy)}
+.choice button span{font-size:11.5px;color:var(--ui-muted)}
+.choice button.on{border-color:var(--orange);background:var(--orange-soft);box-shadow:inset 3px 0 0 var(--orange)}
+
+.seg{display:flex;border:1px solid var(--ui-line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;border-left:1px solid var(--ui-line);background:#fff;padding:8px 6px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ui-ink)}
+.seg button:first-child{border-left:0}
+.seg button:hover{background:var(--soft)}
+.seg button.on{background:var(--navy);color:#fff;font-weight:600}
+.box{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--soft)}
+.inrow{display:flex;gap:6px}
+.btn2{flex:none;border:0;border-radius:7px;background:var(--navy);color:#fff;font:inherit;font-size:12.5px;font-weight:600;padding:0 12px;cursor:pointer}
+.btn2:hover{background:var(--navy2)}
+#mxInfo a{color:var(--navy2)}
+
+/* Preisübersicht unten */
+.sidesum{position:sticky;bottom:0;z-index:2;background:var(--navy);color:#fff;padding:10px 16px 12px;font-size:12px;box-shadow:0 -6px 16px rgba(20,30,60,.12)}
+.sidesum .ln{display:flex;justify-content:space-between;gap:10px;opacity:.8;padding:1px 0}
+.sidesum .ln span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sidesum .tot{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid rgba(255,255,255,.2);margin-top:5px;padding-top:6px}
+.sidesum .tot b{font-size:17px}
+.sidesum .tot small{opacity:.7}
+[hidden]{display:none!important}
+.stage{overflow:auto;padding:28px 20px 60px}
+.toolbar{display:flex;justify-content:center;gap:10px;align-items:center;font-size:12.5px;color:var(--ui-muted);margin-bottom:16px}
+.toolbar select{width:auto;padding:4px 6px}
+.pages{display:flex;flex-direction:column;align-items:center;gap:24px}
+.warn{position:absolute;top:6mm;right:6mm;background:#d92d20;color:#fff;font-size:11px;padding:4px 8px;border-radius:5px;z-index:5}
+.hint{font-size:11.5px;color:var(--ui-muted);line-height:1.45;margin:8px 0 0}
+.nr-box input{font-size:15px;font-weight:600;padding:9px 10px}
+.side input.need{border-color:#d92d20;background:#fff5f4}
+.hint.need{color:#d92d20}
+.missing{color:#d92d20;font-style:italic;font-weight:600}
+
+/* ---------- Offer pages ---------- */
+.page{width:210mm;height:297mm;background:#fff;position:relative;overflow:hidden;box-shadow:0 10px 30px rgba(20,30,60,.16);color:var(--ink);font-size:9.3pt;line-height:1.42;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page .topbar{position:absolute;top:0;left:0;right:0;height:3.2mm;background:linear-gradient(90deg,var(--navy) 0 72%,var(--orange) 72% 100%)}
+.page .inner{position:absolute;top:12mm;left:18mm;right:18mm;bottom:20mm;overflow:hidden}
+.page .foot{position:absolute;left:18mm;right:18mm;bottom:7mm;border-top:1px solid var(--line);padding-top:2.4mm;display:grid;grid-template-columns:1.1fr 1.4fr 1fr auto;gap:5mm;font-size:6.6pt;color:var(--muted);line-height:1.45}
+.page .foot .pg{color:var(--navy2);font-weight:600;align-self:end}
+
+.head{display:flex;justify-content:space-between;align-items:flex-start}
+.head img{height:12mm}
+.head .sender{text-align:right;font-size:7.6pt;color:var(--muted);line-height:1.5}
+.head .sender b{color:var(--navy);font-weight:600}
+
+.addr{display:grid;grid-template-columns:1fr 64mm;gap:8mm;margin-top:7mm}
+.addr .ret{font-size:6.8pt;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:1mm;margin-bottom:2.5mm;display:inline-block}
+.addr .to{font-size:10pt;line-height:1.5}
+.addr .to b{font-weight:600}
+.meta{background:var(--soft);border-radius:2.5mm;padding:2.8mm 4mm;font-size:8pt}
+.meta div{display:flex;justify-content:space-between;gap:3mm;padding:.4mm 0}
+.meta span{color:var(--muted)}
+.meta b{font-weight:600;text-align:right}
+
+.hero{margin-top:6.5mm;background:var(--navy);color:#fff;border-radius:3.5mm;padding:5.5mm 7.5mm 5mm;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-18mm;top:-18mm;width:62mm;height:62mm;border-radius:50%;background:radial-gradient(circle,rgba(239,125,45,.38),rgba(239,125,45,0) 70%)}
+.hero .eyebrow{font-size:7.6pt;letter-spacing:.14em;text-transform:uppercase;color:#f6b989;font-weight:600}
+.hero h2{margin:1.5mm 0 2mm;font-size:18pt;line-height:1.15;font-weight:700;letter-spacing:-.01em;max-width:150mm;position:relative;z-index:1}
+.hero p{margin:0;font-size:9pt;color:#d9e0f0;max-width:150mm;position:relative;z-index:1}
+.chips{display:flex;flex-wrap:wrap;gap:2mm;margin-top:3.5mm;position:relative;z-index:1}
+.chips span{border:1px solid rgba(255,255,255,.28);border-radius:20mm;padding:1mm 3mm;font-size:7.8pt;color:#fff}
+.chips span:first-child{background:var(--orange);border-color:var(--orange);font-weight:600}
+
+.letter{margin-top:5mm}
+.letter .subj{font-weight:700;color:var(--navy);font-size:10.3pt;margin:0 0 2.2mm}
+.letter p{margin:0 0 1.8mm}
+
+h3.sec{font-size:11.2pt;color:var(--navy);margin:4.5mm 0 1mm;font-weight:700;letter-spacing:-.005em}
+.sec-sub{color:var(--muted);margin:0 0 2.5mm;font-size:8.6pt}
+.kicker{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;color:var(--orange);font-weight:700;margin-top:4.5mm}
+.kicker + h3.sec{margin-top:.8mm}
+
+.ps{display:grid;gap:1.8mm}
+.ps .it{display:grid;grid-template-columns:.78fr 7mm 1.6fr;align-items:stretch}
+.ps .p{background:var(--soft);border-radius:2.2mm 0 0 2.2mm;padding:2mm 3.2mm;color:var(--muted);font-size:8.6pt;display:flex;align-items:center}
+.ps .arr{background:var(--soft);display:flex;align-items:center;justify-content:center;color:var(--orange);font-weight:700}
+.ps .s{border:1px solid var(--line);border-left:1mm solid var(--orange);border-radius:0 2.2mm 2.2mm 0;padding:1.8mm 3.5mm}
+.ps .s b{display:block;color:var(--navy);font-size:9pt}
+.ps .s span{font-size:8.4pt;color:var(--ink)}
+
+.price-teaser{margin-top:4.5mm;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:3mm;padding:2.8mm 5mm;background:linear-gradient(90deg,var(--orange-soft),#fff 70%)}
+.price-teaser .l{font-size:8.6pt;color:var(--muted)}
+.price-teaser .l b{display:block;color:var(--navy);font-size:10pt}
+.price-teaser .r{text-align:right}
+.price-teaser .r b{font-size:15.5pt;color:var(--navy);font-weight:700;letter-spacing:-.01em}
+.price-teaser .r span{display:block;font-size:7.6pt;color:var(--muted)}
+
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:2.2mm}
+.step{border:1px solid var(--line);border-radius:2.5mm;padding:2.6mm 3.5mm 2.4mm;display:grid;grid-template-columns:8.5mm 1fr;gap:2mm}
+.step .n{width:8mm;height:8mm;border-radius:50%;background:var(--navy);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:9pt}
+.step b{display:block;color:var(--navy);font-size:9.4pt;margin-bottom:.6mm}
+.step span{font-size:8.5pt;color:var(--ink)}
+
+.take{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2mm}
+.take div{background:var(--soft);border-radius:2.5mm;padding:2.6mm 3.2mm 2.6mm 10mm;font-size:8.2pt;position:relative}
+.take div::before{content:"✓";display:inline-flex;width:5.5mm;height:5.5mm;border-radius:50%;background:var(--orange);color:#fff;font-weight:700;align-items:center;justify-content:center;font-size:8pt;position:absolute;left:3mm;top:2.8mm}
+.take b{display:block;color:var(--navy);font-size:9pt;margin-bottom:.6mm}
+
+.target{margin-top:2.5mm;font-size:8.4pt;color:var(--ink);border-left:1mm solid var(--navy2);padding:1mm 0 1mm 3.5mm}
+.target b{color:var(--navy)}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
+dl.facts{margin:0;display:grid;grid-template-columns:22mm 1fr;font-size:8.3pt}
+dl.facts dt{color:var(--muted);padding:.75mm 0;border-bottom:1px solid var(--line)}
+dl.facts dd{margin:0;padding:.75mm 0;border-bottom:1px solid var(--line)}
+table.price{width:100%;border-collapse:collapse;font-size:8.5pt}
+table.price th{text-align:left;font-weight:600;color:var(--muted);font-size:7.4pt;text-transform:uppercase;letter-spacing:.06em;border-bottom:1.5px solid var(--navy);padding:1.3mm 0}
+table.price td{padding:1.3mm 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.price td small{display:block;color:var(--muted);font-size:7.6pt}
+table.price .num{text-align:right;white-space:nowrap;padding-left:3mm}
+table.price tr.sum td{border-bottom:none;padding:1.1mm 0;color:var(--muted)}
+table.price tr.total td{border-top:1.5px solid var(--navy);border-bottom:none;font-weight:700;color:var(--navy);font-size:10pt;padding-top:2mm}
+.pnote{font-size:7.6pt;color:var(--muted);margin-top:1.5mm}
+table.plan{width:100%;border-collapse:collapse;font-size:7.9pt}
+table.plan th{text-align:left;font-weight:600;color:var(--muted);font-size:6.9pt;text-transform:uppercase;letter-spacing:.06em;border-bottom:1.5px solid var(--navy);padding:1mm 2mm 1mm 0}
+table.plan td{padding:1mm 2mm 1mm 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.plan td:first-child{color:var(--orange);font-weight:700;width:5mm}
+table.plan td:nth-child(2){color:var(--navy);font-weight:600}
+table.plan td em{font-style:normal;font-weight:400;font-size:6.8pt;color:var(--orange)}
+table.plan td small{color:var(--muted)}
+table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
+
+.note{margin-top:3.5mm;background:var(--orange-soft);border-radius:2.5mm;padding:2.4mm 4mm;font-size:8.3pt}
+.note b{color:var(--navy)}
+.cond{font-size:7.8pt;color:var(--muted);margin-top:3mm}
+.cond a,.link a{color:var(--navy2)}
+.link{font-size:8.2pt;margin-top:1.5mm}
+
+.close{margin-top:3.5mm}
+.sig p{margin:0 0 1mm}
+.sig .name{margin-top:3mm;color:var(--navy);font-weight:700;font-size:10pt}
+.sig .role{font-size:8.2pt;color:var(--muted)}
+.flow{margin-top:3.5mm;display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:3mm;align-items:center}
+.flow-t{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;color:var(--orange);font-weight:700;width:22mm;line-height:1.3}
+.flow>div:not(.flow-t){display:flex;gap:2mm;align-items:flex-start;font-size:7.9pt;color:var(--muted)}
+.flow i{font-style:normal;flex:none;width:5.5mm;height:5.5mm;border-radius:50%;border:1.2px solid var(--navy2);color:var(--navy2);font-weight:700;font-size:7.6pt;display:flex;align-items:center;justify-content:center}
+.flow b{display:block;color:var(--navy);font-size:8.4pt}
+
+
+
+
+/* ---------- Print ---------- */
+@page{size:A4;margin:0}
+@media print{
+  html,body{background:#fff}
+  .app{display:block;height:auto}
+  .side,.toolbar,.warn{display:none!important}
+  .missing{visibility:hidden}
+  .stage{padding:0;overflow:visible}
+  .pages{display:block;gap:0;zoom:1!important}
+  .page{box-shadow:none;break-after:page;page-break-after:always;margin:0}
+  .page:last-child{break-after:auto;page-break-after:auto}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <header>
+      <h1>Angebotsgenerator</h1>
+      <p>Schritte 1–4 ausfüllen, rechts erscheint die Vorschau. „PDF erstellen“ → im Druckdialog „Als PDF speichern“.</p>
+      <div class="btns">
+        <button class="btn primary" id="bPrint">PDF erstellen</button>
+        <button class="btn" id="bSave">Speichern (.json)</button>
+        <button class="btn" id="bLoad">Laden</button>
+        <button class="btn" id="bNew">Neu</button>
+        <input type="file" id="fLoad" accept=".json,application/json" hidden>
+      </div>
+    </header>
+    <div class="form" id="form">
+
+      <details open class="fs">
+        <summary><i class="n">1</i>Kategorie<span class="sv" id="svKat"></span></summary>
+        <div class="choice">
+          <button data-kat="oeffentlich"><b>Öffentliche Schulung</b><span>Kurs aus dem Programm · Tagespauschale</span></button>
+          <button data-kat="inhouse"><b>Inhouse-Workshop</b><span>KI-Abläufe oder Copilot · Festpreis</span></button>
+          <button data-kat="kompetenz"><b>Kompetenzmodell</b><span>Projekt über mehrere Monate</span></button>
+        </div>
+        <div data-cat="inhouse">
+          <div class="sub">Welcher Workshop?</div>
+          <div class="preset">
+            <button data-preset="A"><b>A · KI-Abläufe</b><span>KI-Skills ohne Programmierung</span></button>
+            <button data-preset="B"><b>B · Copilot-Praxistag</b><span>Copilot & Prozessautomatisierung</span></button>
+          </div>
+        </div>
+      </details>
+
+      <details open class="fs nr-box">
+        <summary><i class="n">2</i>Angebot<span class="sv" id="svNr"></span></summary>
+        <label>Kunden-Nr. = Angebots-Nr. <small>(Pflichtfeld)</small></label><input data-k="kunde.kundennr" id="nrInput" placeholder="Kundennummer eingeben" autocomplete="off">
+        <p class="hint" id="nrHint"></p>
+        <div class="row"><div><label>Datum</label><input type="date" data-k="angebot.datum"></div><div><label>Gültigkeit (Tage)</label><input type="number" min="1" data-k="angebot.gueltig"></div></div>
+      </details>
+
+      <details open class="fs">
+        <summary><i class="n">3</i>Kunde<span class="sv" id="svKunde"></span></summary>
+        <label>Firma</label><input data-k="kunde.firma">
+        <div class="row3">
+          <div><label>Anrede</label><select data-k="kunde.anrede"><option>Frau</option><option>Herr</option><option value="">–</option></select></div>
+          <div><label>Vorname</label><input data-k="kunde.vorname"></div>
+          <div><label>Nachname</label><input data-k="kunde.nachname"></div>
+        </div>
+        <label>Straße</label><input data-k="kunde.strasse">
+        <div class="row"><div><label>PLZ</label><input data-k="kunde.plz"></div><div><label>Ort</label><input data-k="kunde.ort"></div></div>
+        <label>E-Mail</label><input data-k="kunde.email">
+      </details>
+
+      <details open class="fs">
+        <summary><i class="n">4</i>Leistung & Preis<span class="sv" id="svPreis"></span></summary>
+
+        <div data-cat="oeffentlich">
+          <label>Kurs <small>(aus der Liste wählen oder frei eintragen)</small></label><input data-k="schulung.kurs" list="kursliste" autocomplete="off" placeholder="Kursname eingeben …">
+          <datalist id="kursliste"></datalist>
+        </div>
+        <div data-cat="oeffentlich inhouse">
+          <div class="row">
+            <div data-cat="oeffentlich"><label>Tage</label><input type="number" min="1" data-k="schulung.tage"></div>
+            <div><label>Teilnehmer</label><input type="number" min="1" data-k="schulung.personen" class="pers"></div>
+          </div>
+          <p class="hint" id="persHint"></p>
+
+          <label>Durchführung</label>
+          <div class="seg" id="fmtSeg">
+            <button data-fmt="online">Online</button>
+            <button data-fmt="standort">ppedv-Standort</button>
+            <button data-fmt="kunde">Beim Kunden</button>
+          </div>
+          <div id="standortWrap"><label>Standort</label><select data-k="schulung.standort"><option>Burghausen</option><option>München</option><option>Berlin</option><option>Wien</option></select></div>
+
+          <div class="row">
+            <div><label id="preisLabel">Preis (€ netto)</label><input type="number" min="0" step="50" data-k="schulung.preis"></div>
+            <div data-cat="inhouse"><label>Rabattcode <small>(−20 %)</small></label><input data-k="schulung.rabatt" autocomplete="off"></div>
+          </div>
+          <p class="hint" id="preisHint"></p>
+          <p class="hint" id="rabattHint"></p>
+        </div>
+
+        <div id="reiseBox" class="box">
+          <div class="sub" style="margin:0;padding:0;border:0">Reisekosten Trainer <small style="font-weight:400;color:var(--ui-muted)">· 1:1 nach Aufwand</small></div>
+          <div class="row"><div><label>Kilometer <small>(hin + zurück)</small></label><input type="number" min="0" data-k="reise.km"></div><div><label>Übernachtungen</label><input type="number" min="0" data-k="reise.naechte"></div></div>
+          <div class="row"><div><label>€ pro km</label><input type="number" min="0" step="0.01" data-k="reise.kmSatz"></div><div><label>Hotel € / Nacht <small>(ca.)</small></label><input type="number" min="0" data-k="reise.hotel"></div></div>
+        </div>
+
+        <div data-cat="kompetenz">
+          <div class="box" style="margin-top:0">
+            <div class="sub" style="margin:0;padding:0;border:0">Aus der Kompetenzmatrix übernehmen</div>
+            <label>Link aus der Matrix <small>(Abschluss → „Angebot im Angebotsgenerator“)</small></label>
+            <div class="inrow"><input id="mxLink" placeholder="Link einfügen …" autocomplete="off"><button type="button" class="btn2" id="mxGo">Übernehmen</button></div>
+            <p class="hint" id="mxInfo"></p>
+          </div>
+          <div class="row">
+            <div><label>Preis je Kurs (€ netto)</label><input type="number" min="0" step="50" data-k="schulung.preis"></div>
+            <div><label>Anreise je Vor-Ort-Termin (€)</label><input type="number" min="0" step="50" data-k="reise.proTermin" placeholder="nach Aufwand"></div>
+          </div>
+        </div>
+        <label>Weitere Positionen <small>(optional · Bezeichnung | Beschreibung | Menge | Einzelpreis netto)</small></label><textarea data-k="positionen" rows="2"></textarea>
+      </details>
+
+      <div class="opt-title">Optional anpassen</div>
+
+      <details class="fs opt">
+        <summary>Betreff & Brieftext</summary>
+        <label>Betreff <small>(leer = automatisch)</small></label><input data-k="angebot.betreff">
+        <label>Brieftext <small>(Leerzeile = neuer Absatz)</small></label><textarea data-k="angebot.brief" rows="6"></textarea>
+      </details>
+
+      <details class="fs opt">
+        <summary>Inhalte der Seiten</summary>
+        <p class="hint" style="margin-top:0">Leere Felder werden im Angebot ausgeblendet.</p>
+        <label>Überzeile</label><input data-k="produkt.eyebrow">
+        <label>Titel</label><input data-k="produkt.titel">
+        <label>Untertitel</label><textarea data-k="produkt.untertitel" rows="3"></textarea>
+        <label>Eckdaten <small>(eine pro Zeile)</small></label><textarea data-k="produkt.chips" rows="3"></textarea>
+        <label>Nutzen – Überschrift</label><input data-k="produkt.nutzenTitel">
+        <label>Problem → Lösung <small>(Problem | Lösung | Erklärung)</small></label><textarea data-k="produkt.nutzen" rows="4"></textarea>
+        <label>Ablauf – Untertitel</label><input data-k="produkt.stepsIntro">
+        <label>Ablauf-Schritte <small>(Titel | Text)</small></label><textarea data-k="produkt.steps" rows="4"></textarea>
+        <label>Was Ihr Team mitnimmt <small>(Titel | Text)</small></label><textarea data-k="produkt.takeaways" rows="3"></textarea>
+        <label>Zielgruppe</label><textarea data-k="produkt.zielgruppe" rows="3"></textarea>
+        <label>Hinweis-Box</label><textarea data-k="produkt.hinweis" rows="2"></textarea>
+        <label>Link zur Kursseite</label><input data-k="produkt.link">
+      </details>
+
+      <details class="fs opt">
+        <summary>Rahmendaten & Steuer</summary>
+        <label>Weitere Rahmendaten <small>(Bezeichnung | Wert · Dauer, Teilnehmer, Format kommen automatisch)</small></label><textarea data-k="rahmen" rows="5"></textarea>
+        <div class="row"><div><label>USt. %</label><input type="number" data-k="preis.mwst"></div><div><label>Preis-Hinweis</label><input data-k="preis.hinweis"></div></div>
+        <label class="check"><input type="checkbox" data-k="preis.brutto"> USt. und Bruttosumme ausweisen</label>
+      </details>
+
+      <details class="fs opt">
+        <summary>Absender</summary>
+        <div class="row"><div><label>Name</label><input data-k="absender.name"></div><div><label>Funktion</label><input data-k="absender.rolle"></div></div>
+        <div class="row"><div><label>Telefon (Durchwahl)</label><input data-k="absender.tel"></div><div><label>E-Mail</label><input data-k="absender.email"></div></div>
+        <label class="check"><input type="checkbox" data-k="absender.iv"> „i.V.“ vor dem Namen</label>
+      </details>
+      <p class="hint">Eingaben werden in diesem Browser automatisch zwischengespeichert. Für die Ablage pro Kunde „Speichern (.json)“ nutzen.</p>
+    </div>
+
+    <div class="sidesum" id="sidesum"></div>
+  </aside>
+
+  <main class="stage">
+    <div class="toolbar">Zoom
+      <select id="zoom"><option value="0.6">60 %</option><option value="0.75">75 %</option><option value="0.9" selected>90 %</option><option value="1">100 %</option></select>
+    </div>
+    <div class="pages" id="pages"></div>
+  </main>
+</div>
+
+<script>
+const LOGO = "logo.png";
+
+const FIRMA = {
+  name: "ppedv AG", strasse: "Marktler Str. 15b", ort: "84489 Burghausen",
+  tel: "+49 8677 9889-0", mail: "info@ppedv.de", web: "www.ppedv.de",
+  agb: "https://www.ppedv.de/microsoftexperte/AGB.aspx",
+  foot: [
+    ["Vorstand: Johannes Preishuber-Pflügl", "Amtsgericht Traunstein HRB 12703"],
+    ["Volksbank Raiffeisenbank Oberbayern Südost eG", "IBAN DE14 7109 0000 0004 0118 99 · BIC GENODEF1BGL"],
+    ["St.-Nr. 131/45412", "USt-IdNr. DE188795733"]
+  ]
+};
+
+const PRESETS = {
+  A: {
+    angebot: { betreff: "Ihr Angebot: Inhouse-Workshop „KI-Abläufe, die funktionieren“" },
+    produkt: {
+      eyebrow: "Inhouse-Workshop · KI im Arbeitsalltag",
+      titel: "KI-Abläufe, die funktionieren.",
+      untertitel: "Ein Prompt hilft einmal. Ihr Team lernt, aus vorhandenem Wissen, klaren Regeln und wiederverwendbaren Arbeitsanweisungen einen verlässlichen KI-Ablauf zu bauen – für weniger Routinearbeit und gleichbleibend gute Ergebnisse.",
+      chips: "1 Tag\nEinsteiger\nmax. 10 Personen\nonline · Trainingscenter · vor Ort\nohne Programmierkenntnisse",
+      nutzenTitel: "Ein guter Prompt ist noch kein verlässlicher Ablauf.",
+      nutzen: "Wiederkehrende Aufgaben kosten immer wieder Zeit | Ein Skill statt einmaliger Prompts | Eine wiederverwendbare Arbeitsanweisung: Die KI prüft nach einheitlichen Kriterien und liefert eine nachvollziehbare Empfehlung.\nDer KI fehlt Ihr Unternehmenswissen | Wissen und Beispiele geordnet | Eine Wissensbasis, auf die die KI gezielt zugreift.\nEntscheidungsregeln bleiben unausgesprochen | Regeln und Grenzen sichtbar | Kriterien, Ausnahmen und Prüfschritte festgehalten und prüfbar.",
+      stepsIntro: "An einem vorbereiteten, typischen Vorgang aus Ihrer Branche.",
+      steps: "Vorgang verstehen | Welche Schritte kosten Zeit, welche Informationen braucht es, wo entscheidet Erfahrung?\nWissensbasis aufbauen | Informationen, Vorlagen und Hintergrundwissen so ordnen, dass die KI gezielt darauf zugreift.\nRegeln & Skill entwickeln | Kriterien, Ausnahmen und Prüfschritte festhalten – daraus entsteht der Skill.\nTesten & verbessern | Verschiedene Fälle zeigen Lücken, bis die Ergebnisse nachvollziehbar und brauchbar sind.",
+      takeaways: "Ein nachvollziehbares Branchenbeispiel | mit Informationen, Entscheidungsregeln und menschlichen Prüfpunkten.\nEin erprobtes Vorgehensmodell für KI-Skills | wie Wissen, Regeln, Ausnahmen und Qualitätskriterien zusammenspielen.\nEinen realistischen nächsten Schritt | für die Übertragung auf eigene Aufgaben im Unternehmen.",
+      zielgruppe: "Für Teamleiter, Entscheider und ihre Fachbereiche, die wiederkehrende Aufgaben einfacher und verlässlicher erledigen möchten. KI- oder IT-Vorkenntnisse sind nicht nötig.",
+      hinweis: "Die Verantwortung bleibt beim Menschen: Ihr Team legt fest, wann geprüft, ergänzt oder freigegeben wird.",
+      link: ""
+    },
+    leistung: "Workshop-Pauschale „KI-Abläufe, die funktionieren“",
+    positionen: ""
+  },
+  B: {
+    angebot: { betreff: "Ihr Angebot: Praxistag „Copilot & Prozessautomatisierung“" },
+    produkt: {
+      eyebrow: "Praxistag · Copilot & Prozessautomatisierung",
+      titel: "Wiederkehrende Arbeit. Einmal richtig aufgebaut. Mit Copilot automatisiert.",
+      untertitel: "Ein Prompt hilft einmal. Sie lernen, einen wiederkehrenden Vorgang so aufzubauen, dass Copilot ihn mit vorhandenem Wissen, klaren Regeln und festen Prüfpunkten immer wieder unterstützt.",
+      chips: "1 Tag\nEinsteiger\nmax. 10 Personen\nonline · Trainingscenter · vor Ort\nohne Programmierkenntnisse",
+      nutzenTitel: "Aus einzelnen Copilot-Antworten wird ein verlässlicher Ablauf.",
+      nutzen: "Jeder Vorgang startet wieder bei null | Ein wiederverwendbarer Copilot-Ablauf | Ein klarer Workflow startet bei jedem neuen Fall nach demselben Muster.\nDer KI fehlt das nötige Fachwissen | Eine geordnete Wissensbasis | Geeignete Quellen werden sicher und gezielt für Copilot nutzbar gemacht.\nEntscheidungsregeln sind nur im Kopf | Regeln, Ausnahmen und Prüfpunkte | Fachwissen wird zu einem Skill oder Agenten – mit menschlicher Freigabe.",
+      stepsIntro: "An einem vorbereiteten, typischen Vorgang – von der Prozessaufnahme bis zum getesteten Ablauf.",
+      steps: "Vorgang verstehen | Auslöser, Schritte, Entscheidungen und gewünschte Ergebnisse sichtbar machen.\nWissen und Regeln ordnen | Quellen, Beispiele, Kriterien, Ausnahmen und Prüfpunkte strukturieren.\nCopilot-Ablauf bauen | Die Bausteine zu einem Skill oder Agenten verbinden und passende Dienste ergänzen.\nTesten und verbessern | Mehrere Fälle prüfen, Lücken erkennen und Regeln schärfen.",
+      takeaways: "Einen nachvollziehbaren Beispielprozess | mit Auslöser, Wissen, Regeln, Ausnahmen und Prüfpunkten.\nEin erprobtes Vorgehensmodell | für Skills, Agenten und passende Microsoft-Dienste.\nEin Auswahlraster für eigene Prozesse | zur realistischen Bewertung von Automatisierungsideen.",
+      zielgruppe: "Für Teamleiter, Entscheider, Fachbereiche und Digitalisierungsverantwortliche – überall dort, wo Informationen gesammelt, Regeln angewendet, Entwürfe erstellt oder Entscheidungen vorbereitet werden. KI- oder Programmierkenntnisse sind nicht erforderlich.",
+      hinweis: "Die Technik folgt dem Prozess: Je nach Aufgabe kommen Microsoft 365 Copilot, Copilot Studio, SharePoint, Power Automate oder weitere passende Dienste zum Einsatz. Es wird kein konkreter Kundenprozess produktiv automatisiert.",
+      link: "https://ppedv.de/schulung/kurse/microsoft-copilot-oekosystem"
+    },
+    leistung: "Praxistag „Copilot & Prozessautomatisierung“",
+    positionen: ""
+  }
+};
+
+// ---------- Preislogik ----------
+const PREIS = {
+  tagespauschale: 1800, maxPersonenSchulung: 6,              // Kategorie 1
+  inhouse: { online: 3500, standort: 3500, kunde: 4200 },    // Kategorie 2 (wie auf ppedv.de)
+  maxPersonenInhouse: 10, rabattCode: "bestandskunde20", rabatt: 0.20,
+  kompetenzKurs: 3500, kompetenzKursBestand: 2800          // Kategorie 3 (wie in der Kompetenzmatrix)
+};
+const STANDORTE = ["Burghausen","München","Berlin","Wien"];
+
+// Kursprogramm (Stand: ppedv.de/Schulung/MicrosoftTraining) – Name | Tage | Kursseite
+const KURSE = `Citizen Developer Week - Power Apps und Power Automate|5|https://ppedv.de/Schulung/Kurse/MicrosoftPowerPlatformPowerAppsPowerAutomatePowerBIPowerVirtualAgentM365LowCodeSeminarTrainingWeiterbildungWorkshop
+Exchange Online - Microsoft 365 Administration|2|https://ppedv.de/Schulung/Kurse/Exchange-online-Administration-Seminar
+Microsoft 365 (Office 365) - Jump Start Administration|3|https://ppedv.de/schulung/kurse/Office365-Excel-Word-PowerPoint-OneNote-Cloud-Windows-Exchange-SharePoint-Administration-Seminar-Training
+Microsoft Teams - Fortgeschrittene Administration|1|https://ppedv.de/Schulung/Kurse/TeamsMicrosoft365AdministratorFortgeschrittene.aspx
+Microsoft Teams - Grundlagen Administration|2|https://ppedv.de/Schulung/Kurse/TeamsPlannerMicrosoftOffice365GrundlagenEinstiegAdminO365SeminarTraining.aspx
+Power Apps und Power Automate Einstieg - Apps, Workflows und Automatisierung|2|https://ppedv.de/Schulung/Kurse/PowerAppsFlowMicrosoftOffice365SharePointAnwenderSeminarTrainingWeiterbildung
+Power Apps und Power Automate Fortgeschrittene - Low-Code Lösungen|3|https://ppedv.de/Schulung/Kurse/PowerAppsPowerAutomatePowerBIMicrosoftPowerPlatformOffice365LowCodeSeminarTrainingWeiterbildungWorkshop
+Power-Days: Microsoft Teams Administration|3|https://ppedv.de/Schulung/Kurse/TeamsMicrosoft365GrundlagenOnlineSeminarEinstiegAdminTraining
+Power-Woche: Microsoft Teams und Microsoft 365 (Office 365)|5|https://ppedv.de/Schulung/Kurse/Office365MicrosoftTeamsO365ExchangeOnlineSharePointCloudMCSASeminareTraining
+Azure - Administration AZ-104|4|https://ppedv.de/schulung/kurse/CloudMicrosoftAzureHybridActiveDirectoryPowerShellTrainingSeminarLehrgang
+Azure - Grundlagenkurs in 8h|1|https://ppedv.de/schulung/Kurse/Azure_Grundlagen_AZ-900T00-AC_Microsoft_Training_Seminar_Kurs
+Entra ID (Azure AD) - Identitätsverwaltung|1|https://ppedv.de/schulung/kurse/CloudAdministrationMicrosoftWindowsAzureADHybridActiveDirectoryTrainingSeminarWeiterbildungWorkshop
+Power-Woche: Azure und Entra ID (Azure AD) Administration|5|https://ppedv.de/schulung/kurse/AzureMicrosoftCloudAdministratorHybridActiveDirectoryTrainingSeminarWeiterbildungWorkshopPW
+Microsoft 365 DSGVO sicher umsetzen|1|https://ppedv.de/Schulung/Kurse/Microsoft365DSGVOsicherumsetzen.aspx
+Microsoft 365 Grundkurs - IT-Sicherheit Administration|3|https://ppedv.de/Schulung/kurse/Office365-Security-Administration-Microsoft-Sharepoint-Seminar-Training
+Microsoft Defender - Bedrohungen abwehren und Endpunkte schützen|2|https://ppedv.de/schulung/kurse/DefenderSecurityMicrosoftEndpointTrainingMicrosoft365CloudSicherheitSeminar
+Microsoft Intune - Geräte verwalten|2|https://ppedv.de/Schulung/Kurse/microsoft-intune-geraete-verwalten-training
+Power-Woche: Endpoint Manager und Intune|5|https://ppedv.de/Schulung/Kurse/EndpointManagerSeminarIntuneTrainingMicrosoftSystemCenterSCCMAdministratorLehrgang
+C# Fortgeschrittene Programmierung|3|https://ppedv.de/schulung/kurse/CSharpProgrammierungTaskParallelLibraryTPLMultiThreadingSeminarTrainingWorkshop
+C# Programmierung - Sprache und .NET Grundlagen|4|https://ppedv.de/schulung/kurse/CSharpEinstiegVisualStudioProgrammierungSchulungKursSeminarTraining
+Modernes Java – Verständlicher Code durch aktuelle Sprachfeatures|2|https://ppedv.de/Schulung/Kurse/ModernesJava_Sprachfeatures.aspx
+Power-Woche: Modernes Java & Skalierbare Java-Systeme|5|https://ppedv.de/schulung/kurse/Power-Woche-ModernesJava-SkalierbareJava-Systeme.aspx
+Power-Woche: Python - Vom Anfänger zum Data Science Profi|5|https://ppedv.de/Schulung/Kurse/PythonEinsteigerOnlineSeminarGrundlagenProgrammierenlernenTrainingDataScienceMachineLearning
+Python Grundlagen - Einstieg in die Programmierung|3|https://ppedv.de/Schulung/Kurse/Python_Grundlagen_Programmierer_Seminar_Training_Kurs.aspx
+Rust Programmierung Einstieg|2|https://ppedv.de/schulung/kurse/RustProgrammierungEinstieg
+Skalierbare Java-Systeme mit Virtuellen Threads & Structured Concurrency|3|https://ppedv.de/Schulung/Kurse/SkalierbareJava-Systeme.aspx
+VBA - Excel, Access, Word Makro Programmierung|3|https://ppedv.de/schulung/kurse/VBA-Office2007-VisualBasic-Anwendungen-Word-Excel-Access.aspx
+ASP.NET Blazor - SPA mit C#|2|https://ppedv.de/Schulung/Kurse/Blazoraspnetcorerazorvisualstudio.aspx
+ASP.NET Core - Grundlagen|3|https://ppedv.de/Schulung/Kurse/CoreVisualStudioCSharpRosylnASPNETEntityFrameworkProgrammierungSeminarTraining.aspx
+ASP.NET Core Web API - RESTful Webservices mit C#|2|https://ppedv.de/Schulung/Kurse/ASPNET-WebAPI-Http-REST-Hypermedia-MVC-VisualStudio-CSharp-Seminar-Training
+Power-Woche: ASP.NET Core und Blazor|5|https://ppedv.de/schulung/kurse/ASPNETCoreWebAPIEntityFrameworkCoreCSharpVisualBasicBlazorWebAssemblyProgrammierungSeminarTraining.aspx
+Power-Woche: ASP.NET Core und Web API|5|https://ppedv.de/Schulung/Kurse/ASP-NET4-Webanwendung-VisualStudio-CSharp-VisualBasic-WebDeveloper-Ajax-WebForms-Typen-ASPNET-WebAPI-Http-REST-Hypermedia-MVC-Seminar-Training-Powerwoche
+WordPress-Architekt: Planen, Bauen und Steuern der eigenen Web-Präsenz|2|https://ppedv.de/Schulung/Kurse/WordPressPlanenBauenSteuernWebPraesenz.aspx
+Windows Presentation Foundation (WPF) - Windows-Anwendungen programmieren|4|https://ppedv.de/schulung/kurse/WindowsPresentationFoundation-WPF-dotnet-VisualStudio-Schulung-Kurs-Seminar-Training.aspx
+Agentic Coding - KI-Agenten im Entwickleralltag|1|https://ppedv.de/Schulung/Kurse/AgenticCodingKIagentenEntwickler.aspx
+AI in Requirements Engineering|1|https://ppedv.de/Schulung/Kurse/AIinRequirementsEngineering.aspx
+AI-Driven Software Development – Konzeption bis zum Test|3|https://ppedv.de/Schulung/Kurse/AIDrivenTrainingKIChatGPTlernenCopilotKuenstlicheIntelligenzPromptEngineeringSeminar
+Conversational AI|1|https://ppedv.de/Schulung/Kurse/AzureKISeminarMicrosoftBotKundenserviceKuenstlicheIntelligenzOpenAICognitiveServicesTraining.aspx
+Copilot - KI in Word, Excel, Outlook & Co.|1|https://ppedv.de/Schulung/Kurse/Microsoft365SeminarCopilotTrainingAnwenderKuenstlicheIntelligenz
+Copilot für IT, Power-User und AI Champions|2|https://ppedv.de/Schulung/Kurse/CopilotM365AIAnwenderCoworkAgentNotebooksGPTClaudeTraining
+Copilot für M365 Admins - Sichere Einführung und Betrieb|1|https://ppedv.de/Schulung/Kurse/CopilotAdministrationMicrosoft365TrainingKuenstlicheIntelligenzSeminarSecurityWorkshop
+Copilot Studio und Power Platform AI - Agenten, Workflows, Automatisierung|3|https://ppedv.de/Schulung/Kurse/CopilotStudioAIAgentsPowerAppsPowerAutomateOnlineTraining
+EU AI Act und Umsetzung in Unternehmen|1|https://ppedv.de/Schulung/Kurse/EUAiAct
+GitHub Copilot und ChatGPT - besseren Code in kürzerer Zeit|2|https://ppedv.de/Schulung/Kurse/KuenstlicheIntelligenzSeminarSoftwareentwicklungGitHubCopilotlernenChatGPTprogrammierenNodejs
+KI im Marketing - Content, Kampagnen & Workflows|1|https://ppedv.de/schulung/kurse/KIMarketingBootcamp.aspx
+PowerShell mit AI – Automatisierung für Clevere|1|https://ppedv.de/Schulung/Kurse/WindowsPowerShellAIAdministrationChatGPTSeminarKuenstlicheIntelligenzWeiterbildung
+Prompt like a pro - KI-Anweisungen für komplexe Aufgaben optimieren|1|https://ppedv.de/Schulung/Kurse/PromptEngineeringAnwenderSeminarKIAusbildung
+Software verstehen im Zeitalter von Vibe Coding - Vom Blindflug zur Kontrolle|1|https://ppedv.de/Schulung/Kurse/SoftwareVerstehenImZeitalterVonVibeCoding-VomBlindflugZurKontrolle.aspx
+Power-Woche: SQL Server Abfragen|5|https://ppedv.de/schulung/kurse/SQL2012TransactSQLTSQLMOC10774SSMSAbfrageTuningOptimierungIndizesSeminarTrainingPowerwoche
+Power-Woche: SQL Server Administration|5|https://ppedv.de/schulung/kurse/SQLServer2012AdministrationSSMSSSDTPerformanceTuningOptimierungSeminarTrainingPowerwoche.aspx
+SQL - Datenbanksprache und Fortgeschrittene Techniken|3|https://ppedv.de/Schulung/Kurse/SQL-Server-2005-Development-Entwicklung-Transact-Notification-NET
+SQL Grundlagen - Einfache Abfragen in 1 Tag|1|https://ppedv.de/schulung/Kurse/SQL_Server_Grundlagen_Abfragen_Microsoft_Kurs_Seminar_Training.aspx
+SQL Server - Abfragen und Indizes beschleunigen|2|https://ppedv.de/schulung/kurse/SQLServer2011-Performance-Optimierung-Sicherheit-Indizes-Verwaltung-Komprimierung-Verbesserung
+SQL Server - Grundlagen Abfragesprache|3|https://ppedv.de/schulung/kurse/SQLAbfrageSpracheTSQLMicrosoftSQLServer
+SQL Server - Hochverfügbarkeit mit Always On|2|https://ppedv.de/Schulung/Kurse/Hochverf%C3%BCgbarkeitReplikationDatenbankspiegelungAlwaysOnClusterSeminarTraining.aspx
+SQL Server - Monitoring und Performance-Tuning|2|https://ppedv.de/schulung/kurse/SQL-Performance-Optimierung-Sicherheit-Indizes-Verwaltung-Komprimierung-Verbesserung.aspx
+SQL Server - Neuerungen und Migration|2|https://ppedv.de/Schulung/Kurse/Migration-SQLServer2012-Schulung-Kurs-Seminar-Training-TSQL-FileTable-ColumnStore-AlwaysOn
+SQL Server - Planung, Aufbau und Verwaltung|3|https://ppedv.de/schulung/kurse/SQL-Server2011-Schulung-Kurs-Seminar-Training-Administration.aspx
+Microsoft Fabric - Data Warehouse und ML|4|https://ppedv.de/schulung/kurse/MicrosoftFabricSeminarAzureOnlineTrainingDataWarehouseBusinessIntelligenceCopilotOneLakePowerBIMachineLearning
+Power BI Days kompakt!|4|https://ppedv.de/schulung/kurse/MicrosoftPowerBIBusinessIntelligenceExcelDAXPowerQueryPowerPivotPowerViewPowerMapSeminarTraining.aspx
+Power BI Fortgeschrittene - Deep Dive|2|https://ppedv.de/schulung/kurse/MicrosoftPowerBIDAXPowerQueryPowerPivotPowerViewPowerMaplernenSeminarTraining.aspx
+Power BI und Excel - Analyse und Visualisierung von Daten|2|https://ppedv.de/schulung/kurse/SharePoint2010undSQLServer2008-BusinessIntelligence.aspx
+Power-Woche: SQL Server Data Warehouse|5|https://ppedv.de/schulung/kurse/SQLServer2012-Schulung-Kurs-Seminar-Training-SSIS-IntegrationServices-SSAS-AnalysisServices-SSRS-ReportingServices-BusinessIntelligence-MOC10777.aspx
+Python - Machine Learning und Visualisierung|2|https://ppedv.de/schulung/kurse/PythonlernenDatenanalyseVisualisierungMachineLearningOnlineSeminareTraining
+SQL Server Analysis Services (SSAS)|3|https://ppedv.de/schulung/kurse/SQL_Server_2011_Analysis_Services_Schulung_Kurs_Seminar_Training.aspx
+SQL Server Integration Services (SSIS)|2|https://ppedv.de/schulung/kurse/SQL_Server_2011_Integration_Services_Schulung_Kurs_Seminar_Training.aspx
+Power-Woche: SharePoint für Entwickler|5|https://ppedv.de/schulung/kurse/SharePointEntwicklungProgrammierungWorkflowWebPartBCSSeminarTrainingPowerwoche.aspx
+SharePoint - Einstieg Anwendungsentwicklung|2|https://ppedv.de/schulung/kurse/SharePointServerAnwendungsentwicklungAppDesignerWebpartWorkflowTrainingSeminar.aspx
+SharePoint Framework - Lösungen entwickeln|3|https://ppedv.de/Schulung/Kurse/SharePointServerEntwicklungProgrammierungWebPartVisualStudioSharePointDesignerAPIEventReceiverBCSKursSeminarSchulungTraining.aspx
+Power-Days: SharePoint Online & Designer für Anwender|3|https://ppedv.de/Schulung/Kurse/SharePointOnlineSharePointDesignerGrundlagenEinfuehrungEinsteigerSeminarTraining
+SharePoint Online - Grundkurs Administration|3|https://ppedv.de/Schulung/Kurse/Office365-SharePoint-Microsoft-O365-Seminar-Kurs
+SharePoint Online für Anwender|2|https://ppedv.de/Schulung/Kurse/SharePointOnline_in_Office365_Teams_Kurs_Seminar_Schulung_Training.aspx/
+Active Directory mit Windows Server|2|https://ppedv.de/schulung/kurse/Windows-8-Schulung-Kurs-Seminar-Training-Server-ActiveDirectory-FSMO-GPO-2012
+Gruppenrichtlinien (GPO) - Verwaltung in Windows|2|https://ppedv.de/schulung/kurse/GruppenrichtlinienGPOWindowsServerNetzwerkAdministrationVerwaltungTrainingSeminarWeiterbildungWorkshop
+Netzwerk und TCP/IP Grundlagen|2|https://ppedv.de/Schulung/Kurse/Netzwerktechnik-IPv6-DNS-WINS-DHCP-IPSec-VPN-Routing-TCP-Seminar-Training
+PowerShell - Fortgeschrittene Techniken|2|https://ppedv.de/schulung/kurse/PowerShellCorecmdletScriptlernenFortgeschrittenWorkflowProgrammierungSeminarTraining
+PowerShell - Grundkurs automatisierte Administration|2|https://ppedv.de/schulung/kurse/PowershellAdministrationWindowslWMIActiveDirectoryIIS7cmdletspipelinesPs1Skripte
+PowerShell Days - kompakt in 4 Tagen|4|https://ppedv.de/schulung/kurse/WindowsPowerShellCorecmdletScriptWMIlernenFortgeschrittenWorkflowProgrammierungSeminarTraining
+Power-Woche: Windows 11 und Intune|5|https://ppedv.de/Schulung/Kurse/PowerWocheWindows11
+Power-Woche: Windows Server und Active Directory|5|https://ppedv.de/Schulung/Kurse/WindowsServer2019_ActiveDirectory_Administration_NanoServer_SeminarTrainingPW
+Windows 11 - Administration|3|https://ppedv.de/schulung/kurse/Windows11Administration
+Windows Server 2025 & Windows 11 - Neuerungen|1|https://ppedv.de/schulung/kurse/WindowsServerNeuerungenNanoContainerHyperVActiveDirectoryPowerShell
+Windows Server Netzwerk - Administration|3|https://ppedv.de/Schulung/Kurse/WindowsServer2019_Container_Administration_NanoServer_Seminar_Training
+.NET - Moderne Architekturen und Prinzipien mit AI|3|https://ppedv.de/Schulung/kurse/Architektur-Design-DesignPatterns-MEF-MVVM-AOP-PortableLibaries-Kurs-Schulung-Seminar-Training
+Power-Woche: Softwaretests und .NET Architektur mit AI|5|https://ppedv.de/schulung/kurse/dotnetSoftwareArchitekturDesignpatternMVVMMVCUnitTestTDDBDDSoftwareTesting
+Softwaretests mit Visual Studio|2|https://ppedv.de/schulung/kurse/TestDrivenDevelopment_TDD_UnitTests_Patterns_VisualStudio2010_ContinuousIntegration_PEX_Mocking.aspx
+Docker und Kubernetes - Grundlagen Container-Virtualisierung|3|https://ppedv.de/schulung/kurse/containerDockerKuberneteseinstieg
+GIT Einstieg in die verteilte Versionskontrolle|2|https://ppedv.de/schulung/kurse/git-turbo-schulung-seminar-versionsverwaltung.aspx
+Exchange Server - Administration|3|https://ppedv.de/schulung/kurse/ExchangeServerNeuerungenKonfigurationAdministrationTroubleshooting
+System Center Configuration Manager - Administration (SCCM)|3|https://ppedv.de/schulung/kurse/SystemCenter2012_SCCM_Schulung_Kurs_Seminar_Training_MOC10748`
+  .split("\n").map(l=>{ const [name,tage,url]=l.split("|"); return {name,tage:+tage,url}; });
+
+const BRIEF_WORKSHOP = "vielen Dank für das angenehme Gespräch und Ihr Interesse an Wissensvermittlung. Wie besprochen erhalten Sie unser Angebot für einen praxisnahen Workshop-Tag mit Ihrem Team.\n\nAuf der folgenden Seite finden Sie den Ablauf, alle Rahmendaten und die Preisübersicht. Gerne stimmen wir Inhalte und Praxisfall vorab mit Ihnen ab.";
+
+const KATEGORIEN = {
+  oeffentlich: {
+    betreff: "", personen: 6,
+    brief: "vielen Dank für das angenehme Gespräch und Ihr Interesse an Wissensvermittlung. Wie besprochen erhalten Sie unser Angebot für die Schulung Ihres Teams – zur Tagespauschale, online oder an einem ppedv-Standort.\n\nAuf der folgenden Seite finden Sie alle Rahmendaten und die Preisübersicht. Gerne stimmen wir Inhalte und Schwerpunkte vorab mit Ihnen ab.",
+    rahmen: "Termin | nach Vereinbarung\nUnterlagen | Schulungsunterlagen\nZertifikat | ppedv Zertifikat für alle Teilnehmer",
+    positionen: "",
+    produkt: { eyebrow: "Schulung · ppedv Kursprogramm", titel: "", untertitel: "Praxisnahe Schulung mit erfahrenen ppedv-Trainern – exklusiv für Ihr Team, live online oder an einem ppedv-Standort.",
+      chips: "", nutzenTitel: "", nutzen: "", stepsIntro: "", steps: "", takeaways: "", zielgruppe: "", hinweis: "", link: "" }
+  },
+  inhouse: {
+    personen: 10, brief: BRIEF_WORKSHOP,
+    rahmen: "Termin | nach Vereinbarung\nVorbereitung | Praxisfall & Ziele vorab mit dem Trainer\nUnterlagen | Slides & Samples (bei Verfügbarkeit)\nZertifikat | ppedv Zertifikat für alle Teilnehmer"
+  },
+  kompetenz: {
+    betreff: "Ihr Angebot: Kompetenzmodell", personen: "",
+    brief: "vielen Dank für das angenehme Gespräch und Ihr Interesse an Wissensvermittlung. Wie besprochen erhalten Sie unser Angebot für ein Kompetenzmodell, mit dem Ihr Team über mehrere Monate gezielt Wissen aufbaut.\n\nAuf den folgenden Seiten finden Sie Ihren Kursplan, den Projektablauf, alle Rahmendaten und die Preisübersicht. Gerne stimmen wir Inhalte und Zeitplan vorab mit Ihnen ab.",
+    rahmen: "Laufzeit | mehrere Monate\nFormat | Inhouse-Workshops vor Ort und online\nTermine | nach Vereinbarung\nZertifikat | ppedv Zertifikat für alle Teilnehmer",
+    positionen: "",
+    produkt: { eyebrow: "Kompetenzmodell · Inhouse-Programm", titel: "Kompetenzen gezielt aufbauen – Schritt für Schritt.", untertitel: "Ein abgestimmtes Programm aus Inhouse-Workshops vor Ort und online, das Ihr Team über mehrere Monate begleitet.",
+      chips: "mehrere Monate\nvor Ort & online\nindividuell geplant", nutzenTitel: "", nutzen: "", stepsIntro: "", steps: "", takeaways: "", zielgruppe: "", hinweis: "", link: "" }
+  }
+};
+
+function today(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+
+function blank(){
+  const s = {
+    kunde:{firma:"",anrede:"Frau",vorname:"",nachname:"",strasse:"",plz:"",ort:"",kundennr:"",email:""},
+    angebot:{nr:"",datum:today(),gueltig:14,betreff:"",datei:"",brief:BRIEF_WORKSHOP},
+    produkt:{},
+    schulung:{kurs:"",tage:1,personen:10,format:"online",standort:"Burghausen",rabatt:""},
+    reise:{km:0,naechte:0,kmSatz:0.6,hotel:90,proTermin:""},
+    matrix:null,
+    rahmen:"", positionen:"",
+    preis:{mwst:19,brutto:true,hinweis:""},
+    absender:{name:"Sophia Radspieler",rolle:"Customer Service Managerin",tel:"+49 (0)8677-988 917",email:"info@ppedv.de",iv:true}
+  };
+  applyKategorie(s,"inhouse");
+  return s;
+}
+function applyKategorie(s,kat){
+  const K = KATEGORIEN[kat];
+  s.kategorie = kat;
+  s.angebot.brief = K.brief;
+  s.rahmen = K.rahmen;
+  s.schulung.personen = K.personen;
+  if(kat==="oeffentlich" && s.schulung.format==="kunde") s.schulung.format="standort";
+  s.schulung.preis = defaultPreis(s);
+  if(kat==="inhouse"){ applyPreset(s, PRESETS[s.preset] ? s.preset : "A"); return; }
+  s.produkt = JSON.parse(JSON.stringify(K.produkt));
+  s.positionen = K.positionen;
+  s.angebot.betreff = K.betreff;
+}
+// Vorausgewählter Preis je Kategorie bzw. Format – im Formular überschreibbar
+function defaultPreis(s){
+  if(s.kategorie==="oeffentlich") return PREIS.tagespauschale;
+  if(s.kategorie==="inhouse") return PREIS.inhouse[s.schulung.format]||PREIS.inhouse.online;
+  if(s.kategorie==="kompetenz") return s.matrix && s.matrix.bestand ? PREIS.kompetenzKursBestand : PREIS.kompetenzKurs;
+  return "";
+}
+
+// ---------- Übergabe aus der Kompetenzmatrix ----------
+// Die Matrix erzeugt einen Link …#matrix=<base64url(JSON)>. Die Daten stehen hinter dem „#“
+// und werden deshalb nie an einen Server geschickt.
+const MATRIX_FORMATE = { inhouse: "Inhouse – vor Ort", hybrid: "Hybrid – vor Ort und online", online: "Online" };
+function b64urlJson(code){
+  const b64 = code.replace(/-/g,"+").replace(/_/g,"/");
+  const bin = atob(b64); return JSON.parse(new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0))));
+}
+function leseMatrix(text){
+  const t = String(text||"").trim();
+  const m = t.match(/matrix=([A-Za-z0-9_-]+)/);
+  let d=null; try{ d = b64urlJson(m ? m[1] : t); }catch(e){}
+  if(!d || d.typ!=="ppedv-kompetenzmatrix" || !Array.isArray(d.kurse)) throw new Error("Das ist kein Link aus der Kompetenzmatrix.");
+  return d;
+}
+// Erstellt aus den Matrix-Daten ein neues Angebot der Kategorie 3 (Absender bleibt erhalten)
+function angebotAusMatrix(d, alt){
+  const s = blank();
+  if(alt) s.absender = JSON.parse(JSON.stringify(alt.absender));
+  const kd = d.kunde||{}, plzort = String(kd.plzort||"").trim().match(/^(\d{4,5})\s+(.*)$/);
+  const name = String(kd.person||"").trim().split(/\s+/);
+  s.kunde = Object.assign(s.kunde, {
+    firma: kd.firma||"", anrede: kd.anrede==="Herr"||kd.anrede==="Frau" ? kd.anrede : "",
+    vorname: name.length>1 ? name.slice(0,-1).join(" ") : "", nachname: name.length ? name[name.length-1] : "",
+    strasse: kd.strasse||"", plz: plzort ? plzort[1] : "", ort: plzort ? plzort[2] : String(kd.plzort||""),
+    kundennr: String(kd.kundennr||"").trim(), email: kd.email||""
+  });
+  // Ansprechpartner bei ppedv aus der Matrix (falls dort eingetragen); „i.V.“ im Namen wird erkannt
+  const ab = d.absender||{}, abName = String(ab.name||"").trim();
+  if(abName){
+    const iv = /^i\.\s?V\.?\s+/i.test(abName);
+    Object.assign(s.absender, { name: abName.replace(/^i\.\s?V\.?\s+/i,""), iv,
+      rolle: ab.rolle||"", tel: ab.tel||"+49 (0)8677-9889-0", email: ab.email||"info@ppedv.de" });
+  }
+  s.matrix = { kurse: d.kurse, phasen: d.phasen||[], wochen: d.wochen||"", format: d.format||"inhouse",
+    mitarbeitende: d.mitarbeitende||"", bestand: !!d.bestand, kartei: d.kartei||"" };
+  applyKategorie(s, "kompetenz");
+  if(num(d.preis)>0) s.schulung.preis = num(d.preis);
+  s.reise.proTermin = num(d.anreise)||"";
+  s.rahmen = "Termine | genauer Termin je Kurs nach Absprache\nTeilnehmer je Kurs | bis zu 10 Personen im Preis enthalten\nZertifikat | ppedv Zertifikat für alle Teilnehmer";
+  s.produkt.steps = (s.matrix.phasen||[]).map(p=>(p.t||"")+" | "+(p.von&&p.bis?"Woche "+p.von+"–"+p.bis+" · ":"")+(p.ziel||"")).join("\n");
+  return s;
+}
+function vorOrtTermine(s){ return s.matrix ? s.matrix.kurse.filter(c=>c.ort!=="online").length : 0; }
+function applyPreset(s,key){
+  const p = PRESETS[key];
+  s.produkt = JSON.parse(JSON.stringify(p.produkt));
+  s.positionen = p.positionen;
+  s.angebot.betreff = p.angebot.betreff;
+  s.preset = key;
+}
+
+function formatText(s){
+  const f = s.schulung.format;
+  if(f==="standort") return "ppedv-Standort "+(s.schulung.standort||"");
+  if(f==="kunde") return "bei Ihnen vor Ort"+(s.kunde.ort?" in "+s.kunde.ort:"");
+  return "online (Virtual Classroom)";
+}
+function tageText(n){ return n+" "+(n==1?"Tag":"Tage"); }
+function rabattOk(s){ return String(s.schulung.rabatt||"").trim().toLowerCase()===PREIS.rabattCode; }
+function reiseAktiv(s){
+  if(s.kategorie==="oeffentlich") return s.schulung.format==="standort";
+  if(s.kategorie==="inhouse") return s.schulung.format!=="online";
+  return false;
+}
+function kursInfo(name){ return KURSE.find(k=>k.name===String(name||"").trim()); }
+
+// Alle Positionen inkl. automatisch berechneter Pauschale, Rabatt und Reisekosten
+function calc(s){
+  const sch=s.schulung, r=s.reise, pos=[];
+  let base=0;
+  if(s.kategorie==="oeffentlich"){
+    const t=Math.max(1,Math.round(num(sch.tage)||1));
+    const tp=num(sch.preis);
+    base=t*tp;
+    pos.push({bez:"Schulung „"+(sch.kurs||"…")+"“", txt:tageText(t)+" × Tagespauschale "+eur(tp)+", bis "+PREIS.maxPersonenSchulung+" Personen", menge:t, preis:tp});
+  }
+  if(s.kategorie==="inhouse"){
+    base=num(sch.preis);
+    pos.push({bez:PRESETS[s.preset].leistung, txt:"1 Tag, bis "+PREIS.maxPersonenInhouse+" Personen, inkl. Vorbereitung", menge:1, preis:base});
+    if(rabattOk(s)) pos.push({bez:"Rabatt Bestandskunde (−20 %)", txt:"", menge:1, preis:-Math.round(base*PREIS.rabatt)});
+  }
+  let reise=0;
+  if(s.kategorie==="kompetenz" && s.matrix && s.matrix.kurse.length){
+    const n=s.matrix.kurse.length, p=num(sch.preis), v=vorOrtTermine(s), a=num(r.proTermin);
+    base=n*p;
+    pos.push({bez:n+" "+(n==1?"Kurs":"Kurse")+" laut Kursplan", txt:"je Kurs pauschal "+eur(p)+" für bis zu 10 Teilnehmer"+(s.matrix.bestand?" · Bestandskundenpreis":""), menge:n, preis:p});
+    if(v && a){ reise=v*a; pos.push({bez:"Reisekosten", txt:v+" Vor-Ort-"+(v==1?"Termin":"Termine")+" × "+eur(a), menge:v, preis:a}); }
+  }
+  if(reiseAktiv(s)){
+    const km=num(r.km), n=num(r.naechte), t=[];
+    if(km>0){ reise+=km*num(r.kmSatz); t.push(km.toLocaleString("de-DE")+" km × "+eur(num(r.kmSatz))); }
+    if(n>0){ reise+=n*num(r.hotel); t.push(n+" "+(n==1?"Übernachtung":"Übernachtungen")+" × ca. "+eur(num(r.hotel))); }
+    if(reise>0) pos.push({bez:"Reisekosten Trainer (1:1 nach Aufwand)", txt:t.join(" + "), menge:1, preis:reise});
+  }
+  parts(s.positionen).forEach(x=>pos.push({bez:x[0]||"",txt:x[1]||"",menge:num(x[2]||1),preis:num(x[3])}));
+  const netto = pos.reduce((a,x)=>a+x.menge*x.preis,0);
+  return {pos, netto, base, reise};
+}
+
+let S;
+const STORE = "ppedv-angebot-v2";
+
+function get(o,path){ return path.split(".").reduce((a,k)=>a==null?a:a[k],o); }
+function set(o,path,v){ const ks=path.split("."); let a=o; ks.slice(0,-1).forEach(k=>{ if(a[k]==null||typeof a[k]!=="object") a[k]={}; a=a[k]; }); a[ks[ks.length-1]]=v; }
+function esc(t){ return String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function lines(t){ return String(t||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean); }
+function parts(t){ return lines(t).map(l=>l.split("|").map(x=>x.trim())); }
+function paras(t){ return String(t||"").split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean).map(p=>"<p>"+esc(p).replace(/\n/g,"<br>")+"</p>").join(""); }
+function eur(n){ return n.toLocaleString("de-DE",{style:"currency",currency:"EUR"}); }
+function num(v){ if(typeof v==="number") return isNaN(v)?0:v; const n=parseFloat(String(v||"0").replace(/\./g,"").replace(",",".")); return isNaN(n)?0:n; }
+function dfmt(iso){ if(!iso) return ""; const [y,m,d]=iso.split("-"); return d+"."+m+"."+y; }
+function addDays(iso,n){ const d=new Date(iso+"T12:00:00"); d.setDate(d.getDate()+(+n||0)); return d.toISOString().slice(0,10); }
+
+function anrede(k){
+  if(k.anrede==="Frau" && k.nachname) return "Sehr geehrte Frau "+k.nachname+",";
+  if(k.anrede==="Herr" && k.nachname) return "Sehr geehrter Herr "+k.nachname+",";
+  return "Sehr geehrte Damen und Herren,";
+}
+
+function footer(n,total){
+  return `<div class="foot">${FIRMA.foot.map(c=>`<div>${c.map(esc).join("<br>")}</div>`).join("")}<div class="pg">Seite ${n}/${total}</div></div>`;
+}
+
+function render(){
+  const k=S.kunde, a=S.angebot, p=S.produkt, sch=S.schulung, kat=S.kategorie;
+  const {pos, netto, base, reise} = calc(S);
+  const mw = netto*(num(S.preis.mwst)/100);
+  const nr = angebotsNr(S);
+  const nrOut = nr ? esc(nr) : '<span class="missing">bitte eintragen</span>';
+  const person = [k.anrede==="Frau"?"Frau":k.anrede==="Herr"?"Herrn":"", k.vorname, k.nachname].filter(Boolean).join(" ");
+  const tage = Math.max(1,Math.round(num(sch.tage)||1));
+  const maxP = kat==="oeffentlich" ? PREIS.maxPersonenSchulung : PREIS.maxPersonenInhouse;
+  const pers = num(sch.personen);
+  const persText = pers ? pers+" "+(pers==1?"Person":"Personen")+" (max. "+maxP+")" : "bis zu "+maxP+" Personen";
+  const kurs = kursInfo(sch.kurs);
+  // Kategorie 1: Titel, Betreff, Eckdaten und Link ergeben sich aus dem gewählten Kurs
+  const titel = p.titel || (kat==="oeffentlich" ? (sch.kurs||"Schulung") : "");
+  const betreff = a.betreff || (kat==="oeffentlich" ? "Ihr Angebot: Schulung „"+(sch.kurs||"…")+"“" : "");
+  const link = p.link || (kat==="oeffentlich" && kurs ? kurs.url : "");
+  // Kategorie 3 mit Daten aus der Kompetenzmatrix
+  const mx = kat==="kompetenz" && S.matrix && S.matrix.kurse.length ? S.matrix : null;
+  const mxN = mx ? mx.kurse.length : 0, mxV = vorOrtTermine(S);
+  const mxChips = mx ? [mxN+" "+(mxN==1?"Kurs":"Kurse"), mx.wochen?mx.wochen+" Wochen":"", MATRIX_FORMATE[mx.format]||"", mx.mitarbeitende?mx.mitarbeitende+" Mitarbeitende":""].filter(Boolean) : [];
+  const chips = (kat==="oeffentlich" ? [tageText(tage), "bis zu "+maxP+" Personen", sch.format==="online"?"online":"ppedv-Standort "+sch.standort] : mx ? mxChips : []).concat(mx ? [] : lines(p.chips));
+  const teaser = kat==="oeffentlich" ? tageText(tage)+" · bis zu "+maxP+" Personen · Tagespauschale"
+    : kat==="inhouse" ? "1 Tag · bis zu "+maxP+" Personen · Festpreis für Ihr Team"
+    : mx ? mxN+" "+(mxN==1?"Kurs":"Kurse")+" × "+eur(num(sch.preis))+(mx.wochen?" · "+mx.wochen+" Wochen":"")
+    : chips.slice(0,2).join(" · ");
+  const auto = kat==="kompetenz"
+    ? (mx ? [["Laufzeit", mx.wochen?"ca. "+mx.wochen+" Wochen ab Zusage":"nach Absprache"], ["Kurse", mxN+(mxV&&mxV<mxN?" (davon "+mxV+" vor Ort)":"")], ["Format", MATRIX_FORMATE[mx.format]||""]].concat(mx.mitarbeitende?[["Mitarbeitende", String(mx.mitarbeitende)]]:[]) : [])
+    : [["Dauer", kat==="oeffentlich"?tageText(tage):"1 Tag"], ["Teilnehmer", persText], ["Format", formatText(S).replace(/^[ob]/,c=>c.toUpperCase())]];
+  const rahmen = auto.concat(parts(S.rahmen));
+  const nutzen = parts(p.nutzen), steps = parts(p.steps), take = parts(p.takeaways);
+  const reiseHinweis = reiseAktiv(S) && !reise ? "Zzgl. Reisekosten des Trainers, 1:1 nach Aufwand."
+    : mx && mxV && !reise ? "Zzgl. Anreise für "+mxV+" Vor-Ort-"+(mxV==1?"Termin":"Termine")+" (nach Aufwand)." : "";
+  const kursplan = mx ? `
+    <div class="kicker">Ihr Kursplan</div>
+    <h3 class="sec" style="margin-bottom:2.5mm">${mxN} ${mxN==1?"Kurs":"Kurse"} nach Priorität</h3>
+    <table class="plan">
+      <tr><th>#</th><th>Kurs</th><th>Dauer</th><th>Woche</th><th>Ort</th><th>Team</th></tr>
+      ${mx.kurse.map((c,i)=>`<tr><td>${i+1}</td><td>${esc(c.n)}${c.pflicht?" <em>immer dabei</em>":""}</td><td>${esc(c.t||"")}</td><td>${esc(c.woche||"")}</td><td>${esc(c.ort||"")}</td><td>${esc(c.team||"")}${c.tn?` <small>(${esc(c.tn)})</small>`:""}</td></tr>`).join("")}
+    </table>` : "";
+  const ablaufKicker = kat==="kompetenz" ? "Projektablauf" : "Der Workshop-Tag";
+  const ablaufTitel = kat==="kompetenz" ? "In vier Phasen vom Plan in den Alltag" : "So entsteht Ihr verlässlicher Ablauf";
+  const total = mx ? 3 : 2;   // Kategorie 3 mit Kursplan: eigene Seite für Kursplan und Ablauf
+  const pHinweis = [reiseHinweis, S.preis.hinweis].filter(Boolean).join(" ");
+
+  const page1 = `
+  <section class="page"><div class="topbar"></div><div class="inner">
+    <div class="head">
+      <img src="${LOGO}" alt="ppedv">
+      <div class="sender"><b>${esc(FIRMA.name)}</b><br>${esc(FIRMA.strasse)} · ${esc(FIRMA.ort)}<br>${esc(FIRMA.tel)} · ${esc(FIRMA.mail)}<br>${esc(FIRMA.web)}</div>
+    </div>
+    <div class="addr">
+      <div>
+        <div class="ret">${esc(FIRMA.name)} · ${esc(FIRMA.strasse)} · ${esc(FIRMA.ort)}</div>
+        <div class="to"><b>${esc(k.firma)}</b><br>${person?"z. Hd. "+esc(person)+"<br>":""}${esc(k.strasse)}<br>${esc([k.plz,k.ort].filter(Boolean).join(" "))}</div>
+      </div>
+      <div class="meta">
+        <div><span>Angebots-/Kunden-Nr.</span><b>${nrOut}</b></div>
+        <div><span>Datum</span><b>${esc(dfmt(a.datum))}</b></div>
+        <div><span>Gültig bis</span><b>${esc(dfmt(addDays(a.datum,a.gueltig)))}</b></div>
+        <div><span>Ihr Kontakt</span><b>${esc(S.absender.name)}</b></div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="eyebrow">${esc(p.eyebrow)}</div>
+      <h2>${esc(titel)}</h2>
+      <p>${esc(p.untertitel)}</p>
+      <div class="chips">${chips.map(c=>`<span>${esc(c)}</span>`).join("")}</div>
+    </div>
+
+    <div class="letter">
+      <p class="subj">${esc(betreff)}</p>
+      <p>${esc(anrede(k))}</p>
+      ${paras(a.brief)}
+    </div>
+
+    ${nutzen.length?`
+    <div class="kicker">Problem → Lösung</div>
+    <h3 class="sec">${esc(p.nutzenTitel)}</h3>
+    <div class="ps" style="margin-top:3mm">
+      ${nutzen.map(r=>`<div class="it"><div class="p">${esc(r[0])}</div><div class="arr">→</div><div class="s"><b>${esc(r[1])}</b><span>${esc(r[2]||"")}</span></div></div>`).join("")}
+    </div>`:""}
+
+    <div class="price-teaser">
+      <div class="l"><b>Ihre Investition</b>${esc(teaser)}${reise?" · inkl. Reisekosten":""}</div>
+      <div class="r"><b>${eur(netto)}</b><span>netto, zzgl. ${esc(S.preis.mwst)} % USt.</span></div>
+    </div>
+    <div class="flow"><div class="flow-t">So geht es weiter</div>
+      <div><i>1</i><span><b>Angebot bestätigen</b>eine kurze E-Mail genügt</span></div>
+      <div><i>2</i><span><b>Vorgespräch</b>${kat==="oeffentlich"?"Inhalte und Schwerpunkte mit dem Trainer abstimmen":kat==="kompetenz"?"Ziele, Inhalte und Zeitplan gemeinsam festlegen":"Praxisfall und Ziele mit dem Trainer abstimmen"}</span></div>
+      <div><i>3</i><span><b>${kat==="kompetenz"?"Termine festlegen":"Termin festlegen"}</b>${kat==="kompetenz"?"vor Ort und online, über mehrere Monate":esc(formatText(S))}</span></div>
+    </div>
+  </div>${footer(1,total)}</section>`;
+
+  const folgeseite = (n,inhalt)=>`
+  <section class="page"><div class="topbar"></div><div class="inner">
+    <div class="head"><img src="${LOGO}" alt="ppedv" style="height:8mm"><div class="sender">${nr?esc(nr)+" · ":""}${esc(k.firma)}</div></div>
+    ${inhalt}
+  </div>${footer(n,total)}</section>`;
+
+  const ablauf = `
+    ${steps.length?`
+    <div class="kicker">${ablaufKicker}</div>
+    <h3 class="sec">${ablaufTitel}</h3>
+    <p class="sec-sub">${esc(p.stepsIntro)}</p>
+    <div class="steps">
+      ${steps.map((r,i)=>`<div class="step"><div class="n">${i+1}</div><div><b>${esc(r[0])}</b><span>${esc(r[1]||"")}</span></div></div>`).join("")}
+    </div>`:""}
+
+    ${take.length?`
+    <div class="kicker">Ergebnis</div>
+    <h3 class="sec" style="margin-bottom:3mm">Was Ihr Team mitnimmt</h3>
+    <div class="take">${take.map(r=>`<div><b>${esc(r[0])}</b>${esc(r[1]||"")}</div>`).join("")}</div>`:""}
+    ${p.zielgruppe?`<div class="target"><b>Zielgruppe:</b> ${esc(p.zielgruppe)}</div>`:""}`;
+
+  const konditionen = `
+    <div class="kicker">Konditionen</div>
+    <h3 class="sec" style="margin-bottom:3mm">Rahmendaten & Preisübersicht</h3>
+    <div class="two">
+      <dl class="facts">${rahmen.map(r=>`<dt>${esc(r[0])}</dt><dd>${esc(r[1]||"")}</dd>`).join("")}</dl>
+      <div>
+        <table class="price">
+          <tr><th>Leistung</th><th class="num">Betrag</th></tr>
+          ${pos.map(r=>`<tr><td>${esc(r.bez)}${r.txt?`<small>${esc(r.txt)}</small>`:""}</td><td class="num">${r.preis===0?"inklusive":eur(r.menge*r.preis)}</td></tr>`).join("")}
+          ${S.preis.brutto?`
+          <tr class="sum"><td>Summe netto</td><td class="num">${eur(netto)}</td></tr>
+          <tr class="sum"><td>zzgl. ${esc(S.preis.mwst)} % USt.</td><td class="num">${eur(mw)}</td></tr>
+          <tr class="total"><td>Gesamtbetrag</td><td class="num">${eur(netto+mw)}</td></tr>`
+          :`<tr class="total"><td>Gesamt netto</td><td class="num">${eur(netto)}</td></tr>`}
+        </table>
+        ${pHinweis?`<div class="pnote">${esc(pHinweis)}</div>`:""}
+      </div>
+    </div>
+
+    ${p.hinweis?`<div class="note"><b>Gut zu wissen:</b> ${esc(p.hinweis)}</div>`:""}
+
+    <div class="cond">Dieses Angebot ist <b>${esc(a.gueltig)} Tage gültig</b> (bis ${esc(dfmt(addDays(a.datum,a.gueltig)))}). Alle Preise verstehen sich zzgl. der gesetzlichen USt. Es gelten die <a href="${FIRMA.agb}">Allgemeinen Geschäftsbedingungen</a> der ppedv AG.
+    ${link?`<div class="link">Weitere Informationen: <a href="${esc(link)}">${esc(link.replace(/^https?:\/\//,""))}</a></div>`:""}</div>
+
+    <div class="close">
+      <div class="sig">
+        <p>Für Fragen, Wünsche oder Anregungen erreichen Sie mich direkt unter ${esc(S.absender.tel)}${S.absender.email?" oder "+esc(S.absender.email):""}.</p>
+        <p>Mit freundlichen Grüßen</p>
+        <div class="name">${S.absender.iv?'<span style="font-weight:400;color:var(--muted)">i.V. </span>':""}${esc(S.absender.name)}</div>
+        <div class="role">${esc([S.absender.rolle, FIRMA.name].filter(Boolean).join(" · "))}</div>
+      </div>
+    </div>`;
+
+  const pages = document.getElementById("pages");
+  // Langer Kursplan (> 14 Kurse) bekommt Seite 2 für sich, der Ablauf rückt zu den Konditionen
+  pages.innerHTML = page1 + (!mx ? folgeseite(2, ablauf+konditionen)
+    : mxN > 14 ? folgeseite(2, kursplan) + folgeseite(3, ablauf+konditionen)
+    : folgeseite(2, kursplan+ablauf) + folgeseite(3, konditionen));
+  document.title = dateiname(S);   // wird beim PDF-Druck und beim JSON-Speichern als Dateiname verwendet
+  const ni = document.getElementById("nrInput"), nh = document.getElementById("nrHint");
+  if(ni){ ni.classList.toggle("need", !nr); nh.classList.toggle("need", !nr); nh.textContent = nr ? "Dateiname: „"+document.title+"“" : "Pflichtfeld: Die Nummer erscheint im Angebot und im Dateinamen."; }
+  // overflow check
+  pages.querySelectorAll(".page").forEach(pg=>{
+    const inner = pg.querySelector(".inner");
+    if(inner.scrollHeight > inner.clientHeight + 1){
+      const w=document.createElement("div"); w.className="warn"; w.textContent="Inhalt zu lang – bitte kürzen"; pg.appendChild(w);
+    }
+  });
+  syncForm(base, reise, netto, pers, maxP, tage);
+  try{ localStorage.setItem(STORE, JSON.stringify(S)); }catch(e){}
+}
+
+// Formular an die gewählte Kategorie anpassen (Felder ein-/ausblenden, Hinweise)
+function syncForm(base, reise, netto, pers, maxP, tage){
+  const kat=S.kategorie, sch=S.schulung;
+  document.querySelectorAll("[data-cat]").forEach(el=>{
+    const on = el.dataset.cat.split(" ").includes(kat);
+    el.hidden = !on;
+    el.querySelectorAll("input,select,textarea").forEach(i=>i.disabled=!on);   // doppelte Felder (Teilnehmer) nicht doppelt auslösen
+  });
+  document.querySelectorAll("[data-kat]").forEach(b=>b.classList.toggle("on", b.dataset.kat===kat));
+  document.querySelectorAll("[data-preset]").forEach(b=>b.classList.toggle("on", b.dataset.preset===S.preset));
+  document.querySelectorAll("[data-fmt]").forEach(b=>{ b.classList.toggle("on", b.dataset.fmt===sch.format); b.hidden = kat==="oeffentlich" && b.dataset.fmt==="kunde"; });
+  document.getElementById("standortWrap").hidden = sch.format!=="standort";
+  document.getElementById("reiseBox").hidden = !reiseAktiv(S);
+
+  const ph=document.getElementById("persHint"), zuViel = pers>maxP;
+  ph.textContent = zuViel ? "Achtung: Die Pauschale gilt für maximal "+maxP+" Personen." : (kat==="oeffentlich" ? "Tagespauschale gilt für bis zu "+maxP+" Personen." : "");
+  ph.classList.toggle("need", zuViel);
+  document.querySelectorAll(".pers").forEach(i=>i.classList.toggle("need", zuViel));
+
+  const rh=document.getElementById("rabattHint"), code=String(sch.rabatt||"").trim();
+  rh.textContent = !code || kat!=="inhouse" ? "" : rabattOk(S) ? "Rabatt aktiv: −"+eur(Math.round(base*PREIS.rabatt))+" auf die Pauschale (nicht auf die Anreise)." : "Ungültiger Rabattcode.";
+  rh.className = "hint"+(code?(rabattOk(S)?" ok":" need"):"");
+
+  const std=defaultPreis(S), pl=document.getElementById("preisLabel"), phi=document.getElementById("preisHint");
+  pl.textContent = kat==="oeffentlich" ? "Tagespauschale (€ netto)" : "Workshop-Pauschale (€ netto)";
+  phi.textContent = num(sch.preis)===num(std) ? "" : "Preis angepasst (Standard: "+eur(num(std))+").";
+  phi.className = "hint need";
+
+  const mi=document.getElementById("mxInfo"), mxd=S.matrix;
+  mi.innerHTML = mxd && mxd.kurse.length
+    ? "✓ "+mxd.kurse.length+" "+(mxd.kurse.length==1?"Kurs":"Kurse")+" übernommen · "+esc(MATRIX_FORMATE[mxd.format]||"")+(mxd.bestand?" · Bestandskunde":"")+(mxd.kartei?` · <a href="${esc(mxd.kartei)}" target="_blank" rel="noopener">Kartei öffnen</a>`:"")
+    : "Noch keine Daten übernommen.";
+  mi.className = "hint"+(mxd && mxd.kurse.length ? " ok" : "");
+
+  // Kurzstatus in den Schritt-Überschriften
+  const sv=(id,txt,cls)=>{ const e=document.getElementById(id); e.textContent=txt; e.className="sv"+(cls?" "+cls:""); };
+  sv("svKat", kat==="inhouse" ? "Inhouse · "+(S.preset==="B"?"Copilot":"KI-Abläufe") : kat==="oeffentlich" ? "Öffentliche Schulung" : "Kompetenzmodell");
+  sv("svNr", angebotsNr(S) || "Nr. fehlt", angebotsNr(S) ? "" : "need");
+  sv("svKunde", S.kunde.firma || "noch leer", S.kunde.firma ? "" : "need");
+  sv("svPreis", eur(netto)+" netto");
+
+  // Preisübersicht unten in der Seitenleiste
+  const {pos} = calc(S), mw = netto*(num(S.preis.mwst)/100);
+  document.getElementById("sidesum").innerHTML =
+    pos.filter(x=>x.preis).map(x=>`<div class="ln"><span>${esc(x.bez)}</span><span>${eur(x.menge*x.preis)}</span></div>`).join("") +
+    `<div class="tot"><span>Netto <b>${eur(netto)}</b></span><small>Brutto ${eur(netto+mw)}</small></div>`;
+}
+
+// Die Angebotsnummer ist immer die Kundennummer
+function angebotsNr(s){ return String(s.kunde.kundennr||"").trim(); }
+
+// Dateiname: immer „ANG-<Angebotsnummer>_<Unternehmen>“ (unzulässige Zeichen entfernt)
+function dateiname(s){
+  const nr = angebotsNr(s).replace(/^ANG-?/i,"") || "ohne-Nr";
+  const firma = String(s.kunde.firma||"").trim() || "Kunde";
+  return ("ANG-"+nr+"_"+firma).replace(/[\\/:*?"<>|]+/g,"-").replace(/\s+/g," ").trim();
+}
+
+function fillForm(){
+  document.querySelectorAll("[data-k]").forEach(el=>{
+    const v = get(S, el.dataset.k);
+    if(el.type==="checkbox") el.checked = !!v; else el.value = v ?? "";
+  });
+}
+
+document.getElementById("form").addEventListener("input", e=>{
+  const el=e.target; if(!el.dataset.k) return;
+  set(S, el.dataset.k, el.type==="checkbox"?el.checked:(el.type==="number"?(el.value===""?"":+el.value):el.value));
+  // Kurs aus der Liste gewählt → Dauer übernehmen
+  if(el.dataset.k==="schulung.kurs"){ const ki=kursInfo(el.value); if(ki){ S.schulung.tage=ki.tage; fillForm(); } }
+  if(el.dataset.k==="schulung.personen") fillForm();   // beide Teilnehmer-Felder synchron halten
+  if(el.dataset.k==="schulung.format"){ S.schulung.preis=defaultPreis(S); fillForm(); }   // Standardpreis des Formats vorauswählen
+  render();
+});
+document.querySelectorAll("[data-preset]").forEach(b=>b.addEventListener("click",()=>{ applyPreset(S,b.dataset.preset); fillForm(); render(); }));
+document.querySelectorAll("[data-fmt]").forEach(b=>b.addEventListener("click",()=>{ S.schulung.format=b.dataset.fmt; S.schulung.preis=defaultPreis(S); fillForm(); render(); }));
+document.getElementById("mxGo").onclick = ()=>{
+  const inp=document.getElementById("mxLink");
+  try{
+    const d=leseMatrix(inp.value);
+    if(S.kunde.firma && !confirm("Neues Angebot aus der Kompetenzmatrix erstellen?\nDie aktuellen Eingaben werden ersetzt.")) return;
+    S=angebotAusMatrix(d,S); inp.value=""; fillForm(); render();
+  }catch(err){ alert("Link konnte nicht gelesen werden: "+err.message); }
+};
+document.querySelectorAll("[data-kat]").forEach(b=>b.addEventListener("click",()=>{ applyKategorie(S,b.dataset.kat); fillForm(); render(); }));
+document.getElementById("kursliste").innerHTML = KURSE.map(k=>`<option value="${esc(k.name)}">${tageText(k.tage)}</option>`).join("");
+document.getElementById("bPrint").onclick = ()=>{
+  if(!angebotsNr(S) && !confirm("Es ist keine Kunden-/Angebotsnummer eingetragen.\nTrotzdem PDF erstellen?")){ document.getElementById("nrInput").focus(); return; }
+  window.print();
+};
+document.getElementById("bNew").onclick = ()=>{ if(confirm("Alle Eingaben verwerfen und neu beginnen?")){ S=blank(); fillForm(); render(); } };
+document.getElementById("bSave").onclick = ()=>{
+  const blob = new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+  const u = URL.createObjectURL(blob); const l=document.createElement("a");
+  l.href=u; l.download=document.title+".json"; l.click(); setTimeout(()=>URL.revokeObjectURL(u),1000);
+};
+document.getElementById("bLoad").onclick = ()=>document.getElementById("fLoad").click();
+document.getElementById("fLoad").onchange = e=>{
+  const f=e.target.files[0]; if(!f) return;
+  f.text().then(t=>{ try{ S=hydrate(JSON.parse(t)); fillForm(); render(); }catch(err){ alert("Datei konnte nicht gelesen werden: "+err.message); } });
+  e.target.value="";
+};
+const zoomSel=document.getElementById("zoom");
+function applyZoom(){ document.getElementById("pages").style.zoom = zoomSel.value; try{localStorage.setItem(STORE+"-zoom",zoomSel.value);}catch(e){} }
+zoomSel.onchange=applyZoom;
+
+function hydrate(obj){
+  const s = blank();
+  if(obj && obj.preset && PRESETS[obj.preset]) s.preset = obj.preset;
+  // ältere Angebote ohne Kategorie sind Inhouse-Workshops (A/B)
+  applyKategorie(s, obj && KATEGORIEN[obj.kategorie] ? obj.kategorie : "inhouse");
+  merge(s, obj||{});
+  if(!obj || !obj.schulung || obj.schulung.preis==null) s.schulung.preis = defaultPreis(s);
+  return s;
+}
+function merge(base,over){
+  for(const k in over){
+    if(over[k] && typeof over[k]==="object" && !Array.isArray(over[k]) && base[k] && typeof base[k]==="object") merge(base[k],over[k]);
+    else base[k]=over[k];
+  }
+  return base;
+}
+
+// Daten aus URL (#data=base64url-JSON) – für den Kommandozeilen-Export
+function fromHash(){
+  const m = location.hash.match(/data=([^&]+)/);
+  if(!m) return null;
+  const b64 = m[1].replace(/-/g,"+").replace(/_/g,"/");
+  const bin = atob(b64); const bytes = Uint8Array.from(bin,c=>c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+(function init(){
+  let h=null; try{ h=fromHash(); }catch(e){ console.error(e); }
+  let mxd=null; try{ if(/matrix=/.test(location.hash)) mxd=leseMatrix(location.hash); }catch(e){ alert("Link aus der Kompetenzmatrix konnte nicht gelesen werden: "+e.message); }
+  if(h){ S=hydrate(h); }
+  else{
+    let saved=null; try{ saved=JSON.parse(localStorage.getItem(STORE)||"null"); }catch(e){}
+    S = saved ? hydrate(saved) : blank();
+    // Aufruf aus der Kompetenzmatrix: direkt ein Angebot erstellen, dann den Link aus der Adresszeile nehmen
+    if(mxd){ S=angebotAusMatrix(mxd,S); history.replaceState(null,"",location.pathname+location.search); }
+    try{ const z=localStorage.getItem(STORE+"-zoom"); if(z) zoomSel.value=z; }catch(e){}
+  }
+  fillForm(); render(); applyZoom();
+})();
+</script>
+</body>
+</html>
