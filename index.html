@@ -239,7 +239,7 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
       <details open class="fs">
         <summary><i class="n">1</i>Kategorie<span class="sv" id="svKat"></span></summary>
         <div class="choice">
-          <button data-kat="oeffentlich"><b>Öffentliche Schulung</b><span>Kurs aus dem Programm · Tagespauschale</span></button>
+          <button data-kat="oeffentlich"><b>Öffentliche Schulung</b><span>Kurs aus dem Programm · Tagessatz</span></button>
           <button data-kat="inhouse"><b>Inhouse-Workshop</b><span>KI-Abläufe oder Copilot · Festpreis</span></button>
           <button data-kat="kompetenz"><b>Kompetenzmodell</b><span>Projekt über mehrere Monate</span></button>
         </div>
@@ -280,10 +280,11 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
           <datalist id="kursliste"></datalist>
         </div>
         <div data-cat="oeffentlich inhouse">
-          <div class="row">
-            <div data-cat="oeffentlich"><label>Tage</label><input type="number" min="1" data-k="schulung.tage"></div>
-            <div><label>Teilnehmer</label><input type="number" min="1" data-k="schulung.personen" class="pers"></div>
+          <div class="row" data-cat="oeffentlich">
+            <div><label>Ganze Tage <small>(09.00–17.00)</small></label><input type="number" min="0" data-k="schulung.tage"></div>
+            <div><label>Halbe Tage <small>(3,5 Std.)</small></label><input type="number" min="0" data-k="schulung.halbeTage"></div>
           </div>
+          <label>Teilnehmer</label><input type="number" min="1" data-k="schulung.personen" class="pers">
           <p class="hint" id="persHint"></p>
 
           <label>Durchführung</label>
@@ -297,6 +298,7 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
           <div class="row">
             <div><label id="preisLabel">Preis (€ netto)</label><input type="number" min="0" step="50" data-k="schulung.preis"></div>
             <div data-cat="inhouse"><label>Rabattcode <small>(−20 %)</small></label><input data-k="schulung.rabatt" autocomplete="off"></div>
+            <div data-cat="oeffentlich"><label>Halber Tag (€ netto)</label><input type="number" min="0" step="10" data-k="schulung.preisHalb"></div>
           </div>
           <p class="hint" id="preisHint"></p>
           <p class="hint" id="rabattHint"></p>
@@ -439,7 +441,7 @@ const PRESETS = {
 
 // ---------- Preislogik ----------
 const PREIS = {
-  tagespauschale: 1800, maxPersonenSchulung: 6,              // Kategorie 1
+  tagessatz: 2190, halberTag: 1390, maxPersonenSchulung: 6,   // Kategorie 1 (Tagessatz ohne Vorbereitung)
   inhouse: { online: 3500, standort: 3500, kunde: 4200 },    // Kategorie 2 (wie auf ppedv.de)
   maxPersonenInhouse: 10, rabattCode: "bestandskunde20", rabatt: 0.20,
   kompetenzKurs: 3500, kompetenzKursBestand: 2800          // Kategorie 3 (wie in der Kompetenzmatrix)
@@ -557,7 +559,7 @@ const KATEGORIEN = {
   kompetenz: {
     betreff: "Ihr Angebot: Kompetenzmodell", personen: "",
     brief: "vielen Dank für das angenehme Gespräch und Ihr Interesse an Wissensvermittlung. Wie besprochen erhalten Sie unser Angebot für ein Kompetenzmodell, mit dem Ihr Team über mehrere Monate gezielt Wissen aufbaut.\n\nAuf den folgenden Seiten finden Sie Ihren Kursplan, den Projektablauf, alle Rahmendaten und die Preisübersicht. Gerne stimmen wir Inhalte und Zeitplan vorab mit Ihnen ab.",
-    rahmen: "Laufzeit | mehrere Monate\nFormat | Inhouse-Workshops vor Ort und online\nTermine | nach Vereinbarung\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive",
+    rahmen: "Zeitraum | nach Vereinbarung\nFormat | Inhouse-Workshops vor Ort und online\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive",
     positionen: "",
     produkt: { eyebrow: "Kompetenzmodell · Inhouse-Programm", titel: "Kompetenzen gezielt aufbauen – Schritt für Schritt.", untertitel: "Ein abgestimmtes Programm aus Inhouse-Workshops vor Ort und online, das Ihr Team über mehrere Monate begleitet.",
       chips: "mehrere Monate\nvor Ort & online\nindividuell geplant", nutzenTitel: "", nutzen: "", stepsIntro: "", steps: "", takeaways: "", zielgruppe: "", hinweis: "", link: "" }
@@ -571,7 +573,7 @@ function blank(){
     kunde:{firma:"",anrede:"Frau",vorname:"",nachname:"",strasse:"",plz:"",ort:"",kundennr:"",email:""},
     angebot:{nr:"",datum:today(),gueltig:14,betreff:"",datei:"",brief:BRIEF_WORKSHOP},
     produkt:{},
-    schulung:{kurs:"",tage:1,personen:10,format:"online",standort:"Burghausen",rabatt:"",vorbereitung:false},
+    schulung:{kurs:"",tage:1,halbeTage:0,personen:10,format:"online",standort:"Burghausen",rabatt:"",vorbereitung:false,preisHalb:1390},
     details:{technik:"",vorkenntnisse:"",voraussetzungen:"",unterlagen:"Präsentationen und Labs"},
     reise:{km:0,naechte:0,kmSatz:0.6,hotel:90,proTermin:""},
     matrix:null,
@@ -590,6 +592,7 @@ function applyKategorie(s,kat){
   s.schulung.personen = K.personen;
   if(kat==="oeffentlich" && s.schulung.format==="kunde") s.schulung.format="standort";
   s.schulung.preis = defaultPreis(s);
+  s.schulung.preisHalb = PREIS.halberTag;
   if(kat==="inhouse"){ applyPreset(s, PRESETS[s.preset] ? s.preset : "A"); return; }
   s.produkt = JSON.parse(JSON.stringify(K.produkt));
   s.positionen = K.positionen;
@@ -597,7 +600,7 @@ function applyKategorie(s,kat){
 }
 // Vorausgewählter Preis je Kategorie bzw. Format – im Formular überschreibbar
 function defaultPreis(s){
-  if(s.kategorie==="oeffentlich") return PREIS.tagespauschale;
+  if(s.kategorie==="oeffentlich") return PREIS.tagessatz;
   if(s.kategorie==="inhouse") return PREIS.inhouse[s.schulung.format]||PREIS.inhouse.online;
   if(s.kategorie==="kompetenz") return s.matrix && s.matrix.bestand ? PREIS.kompetenzKursBestand : PREIS.kompetenzKurs;
   return "";
@@ -642,8 +645,8 @@ function angebotAusMatrix(d, alt){
   applyKategorie(s, "kompetenz");
   if(num(d.preis)>0) s.schulung.preis = num(d.preis);
   s.reise.proTermin = num(d.anreise)||"";
-  s.rahmen = "Termine | genauer Termin je Kurs nach Absprache\nTeilnehmer je Kurs | bis zu 10 Personen im Preis enthalten\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive";
-  s.produkt.steps = (s.matrix.phasen||[]).map(p=>(p.t||"")+" | "+(p.von&&p.bis?"Woche "+p.von+"–"+p.bis+" · ":"")+ungendern(p.ziel||"")).join("\n");
+  s.rahmen = "Teilnehmer je Kurs | bis zu 10 Personen im Preis enthalten\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive";
+  s.produkt.steps = (s.matrix.phasen||[]).map(p=>(p.t||"")+" | "+ungendern(p.ziel||"")).join("\n");
   return s;
 }
 // ppedv gendert nicht: Texte aus der Matrix für das Angebot angleichen
@@ -673,16 +676,30 @@ function reiseAktiv(s){
 function kursInfo(name){ return KURSE.find(k=>k.name===String(name||"").trim()); }
 
 // Alle Positionen inkl. automatisch berechneter Pauschale, Rabatt und Reisekosten
+// Kategorie 1: ganze und halbe Tage (mindestens ein ganzer Tag, wenn nichts eingetragen ist)
+function tageKat1(sch){
+  let g=Math.max(0,Math.round(num(sch.tage))), h=Math.max(0,Math.round(num(sch.halbeTage)));
+  if(!g && !h) g=1;
+  return {g,h};
+}
+function zahl(n){ return String(n).replace(".",","); }
+function dauerText(g,h){ return [g?tageText(g):"", h?h+" "+(h==1?"halber Tag":"halbe Tage"):""].filter(Boolean).join(" + "); }
+const ZEIT_GANZ = "09.00–17.00 Uhr", ZEIT_HALB = "halbtags 09.00–12.30 oder 13.30–17.00 Uhr";
+function zeitenText(s){
+  if(s.kategorie==="oeffentlich"){ const {g,h}=tageKat1(s.schulung); return g&&h ? ZEIT_GANZ+"; "+ZEIT_HALB : h ? ZEIT_HALB : ZEIT_GANZ; }
+  if(s.kategorie==="kompetenz") return ZEIT_GANZ+" bzw. "+ZEIT_HALB;
+  return ZEIT_GANZ;
+}
 function calc(s){
   const sch=s.schulung, r=s.reise, pos=[];
   let base=0;
   if(s.kategorie==="oeffentlich"){
-    const t=Math.max(1,Math.round(num(sch.tage)||1));
-    const tp=num(sch.preis);
-    base=t*tp;
-    pos.push({bez:"Schulung „"+(sch.kurs||"…")+"“", txt:tageText(t)+" × Tagespauschale "+eur(tp)+", bis "+PREIS.maxPersonenSchulung+" Personen", menge:t, preis:tp});
-    // Vorbereitung kalkulatorisch mit halber Schulungsdauer
-    if(sch.vorbereitung){ const h=t/2; pos.push({bez:"Vorbereitung Trainer", txt:String(h).replace(".",",")+" "+(h==1?"Tag":"Tage")+" (halbe Schulungsdauer) × "+eur(tp), menge:h, preis:tp}); }
+    const {g,h}=tageKat1(sch), tp=num(sch.preis), hp=num(sch.preisHalb), bez="Schulung „"+(sch.kurs||"…")+"“";
+    base=g*tp+h*hp;
+    if(g) pos.push({bez, txt:tageText(g)+" × Tagessatz "+eur(tp)+", bis "+PREIS.maxPersonenSchulung+" Personen", menge:g, preis:tp});
+    if(h) pos.push({bez:g?"Schulung – halbe Tage":bez, txt:h+" × halber Tag à "+eur(hp)+", bis "+PREIS.maxPersonenSchulung+" Personen", menge:h, preis:hp});
+    // Vorbereitung kalkulatorisch mit halber Schulungsdauer (Tagessatz ist ohne Vorbereitung)
+    if(sch.vorbereitung){ const v=(g+h/2)/2; pos.push({bez:"Vorbereitung Trainer", txt:zahl(v)+" "+(v==1?"Tag":"Tage")+" (halbe Schulungsdauer) × Tagessatz "+eur(tp), menge:v, preis:tp}); }
   }
   if(s.kategorie==="inhouse"){
     base=num(sch.preis);
@@ -738,7 +755,7 @@ function render(){
   const nr = angebotsNr(S);
   const nrOut = nr ? esc(nr) : '<span class="missing">bitte eintragen</span>';
   const person = [k.anrede==="Frau"?"Frau":k.anrede==="Herr"?"Herrn":"", k.vorname, k.nachname].filter(Boolean).join(" ");
-  const tage = Math.max(1,Math.round(num(sch.tage)||1));
+  const {g:tg, h:th} = tageKat1(sch), dauer = dauerText(tg, th);
   const maxP = kat==="oeffentlich" ? PREIS.maxPersonenSchulung : PREIS.maxPersonenInhouse;
   const pers = num(sch.personen);
   const persText = pers ? pers+" "+(pers==1?"Person":"Personen")+" (max. "+maxP+")" : "bis zu "+maxP+" Personen";
@@ -750,15 +767,16 @@ function render(){
   // Kategorie 3 mit Daten aus der Kompetenzmatrix
   const mx = kat==="kompetenz" && S.matrix && S.matrix.kurse.length ? S.matrix : null;
   const mxN = mx ? mx.kurse.length : 0, mxV = vorOrtTermine(S);
-  const mxChips = mx ? [mxN+" "+(mxN==1?"Kurs":"Kurse"), mx.wochen?mx.wochen+" Wochen":"", MATRIX_FORMATE[mx.format]||"", mx.mitarbeitende?mx.mitarbeitende+" Mitarbeiter":""].filter(Boolean) : [];
-  const chips = (kat==="oeffentlich" ? [tageText(tage), "bis zu "+maxP+" Personen", sch.format==="online"?"online":"ppedv-Standort "+sch.standort] : mx ? mxChips : []).concat(mx ? [] : lines(p.chips));
-  const teaser = kat==="oeffentlich" ? tageText(tage)+" · bis zu "+maxP+" Personen · Tagespauschale"
+  const mxChips = mx ? [mxN+" "+(mxN==1?"Kurs":"Kurse"), MATRIX_FORMATE[mx.format]||"", mx.mitarbeitende?mx.mitarbeitende+" Mitarbeiter":""].filter(Boolean) : [];
+  const chips = (kat==="oeffentlich" ? [dauer, "bis zu "+maxP+" Personen", sch.format==="online"?"online":"ppedv-Standort "+sch.standort] : mx ? mxChips : []).concat(mx ? [] : lines(p.chips));
+  const teaser = kat==="oeffentlich" ? dauer+" · bis zu "+maxP+" Personen · Tagessatz"
     : kat==="inhouse" ? "1 Tag · bis zu "+maxP+" Personen · Festpreis für Ihr Team"
-    : mx ? mxN+" "+(mxN==1?"Kurs":"Kurse")+" × "+eur(num(sch.preis))+(mx.wochen?" · "+mx.wochen+" Wochen":"")
+    : mx ? mxN+" "+(mxN==1?"Kurs":"Kurse")+" × "+eur(num(sch.preis))+" · Zeitraum nach Vereinbarung"
     : chips.slice(0,2).join(" · ");
-  const auto = kat==="kompetenz"
-    ? (mx ? [["Laufzeit", mx.wochen?"ca. "+mx.wochen+" Wochen ab Zusage":"nach Absprache"], ["Kurse", mxN+(mxV&&mxV<mxN?" (davon "+mxV+" vor Ort)":"")], ["Format", MATRIX_FORMATE[mx.format]||""]].concat(mx.mitarbeitende?[["Mitarbeiter", String(mx.mitarbeitende)]]:[]) : [])
-    : [["Dauer", kat==="oeffentlich"?tageText(tage):"1 Tag"], ["Teilnehmer", persText], ["Format", formatText(S).replace(/^[ob]/,c=>c.toUpperCase())]];
+  const auto = (kat==="kompetenz"
+    ? (mx ? [["Zeitraum", "nach Vereinbarung"], ["Kurse", mxN+(mxV&&mxV<mxN?" (davon "+mxV+" vor Ort)":"")], ["Format", MATRIX_FORMATE[mx.format]||""]].concat(mx.mitarbeitende?[["Mitarbeiter", String(mx.mitarbeitende)]]:[]) : [])
+    : [["Dauer", kat==="oeffentlich"?dauer:"1 Tag"], ["Teilnehmer", persText], ["Format", formatText(S).replace(/^[ob]/,c=>c.toUpperCase())]])
+    .concat([["Schulungszeiten", zeitenText(S)]]);
   const dt = S.details||{};
   const details = [["Technologien",dt.technik],["Vorkenntnisse",dt.vorkenntnisse],["Voraussetzungen",dt.voraussetzungen],["Unterlagen",dt.unterlagen]].filter(r=>String(r[1]||"").trim());
   const rahmen = auto.concat(details, parts(S.rahmen));
@@ -769,8 +787,8 @@ function render(){
     <div class="kicker">Ihr Kursplan</div>
     <h3 class="sec" style="margin-bottom:2.5mm">${mxN} ${mxN==1?"Kurs":"Kurse"} nach Priorität</h3>
     <table class="plan">
-      <tr><th>#</th><th>Kurs</th><th>Dauer</th><th>Woche</th><th>Ort</th><th>Team</th></tr>
-      ${mx.kurse.map((c,i)=>`<tr><td>${i+1}</td><td>${esc(c.n)}${c.pflicht?" <em>immer dabei</em>":""}</td><td>${esc(c.t||"")}</td><td>${esc(c.woche||"")}</td><td>${esc(c.ort||"")}</td><td>${esc(c.team||"")}${c.tn?` <small>(${esc(c.tn)})</small>`:""}</td></tr>`).join("")}
+      <tr><th>#</th><th>Kurs</th><th>Dauer</th><th>Ort</th><th>Team</th></tr>
+      ${mx.kurse.map((c,i)=>`<tr><td>${i+1}</td><td>${esc(c.n)}${c.pflicht?" <em>immer dabei</em>":""}</td><td>${esc(c.t||"")}</td><td>${esc(c.ort||"")}</td><td>${esc(c.team||"")}${c.tn?` <small>(${esc(c.tn)})</small>`:""}</td></tr>`).join("")}
     </table>` : "";
   const ablaufKicker = kat==="kompetenz" ? "Projektablauf" : "Der Workshop-Tag";
   const ablaufTitel = kat==="kompetenz" ? "In vier Phasen vom Plan in den Alltag" : "So entsteht Ihr verlässlicher Ablauf";
@@ -892,12 +910,12 @@ function render(){
       const w=document.createElement("div"); w.className="warn"; w.textContent="Inhalt zu lang – bitte kürzen"; pg.appendChild(w);
     }
   });
-  syncForm(base, reise, netto, pers, maxP, tage);
+  syncForm(base, reise, netto, pers, maxP);
   try{ localStorage.setItem(STORE, JSON.stringify(S)); }catch(e){}
 }
 
 // Formular an die gewählte Kategorie anpassen (Felder ein-/ausblenden, Hinweise)
-function syncForm(base, reise, netto, pers, maxP, tage){
+function syncForm(base, reise, netto, pers, maxP){
   const kat=S.kategorie, sch=S.schulung;
   document.querySelectorAll("[data-cat]").forEach(el=>{
     const on = el.dataset.cat.split(" ").includes(kat);
@@ -911,7 +929,7 @@ function syncForm(base, reise, netto, pers, maxP, tage){
   document.getElementById("reiseBox").hidden = !reiseAktiv(S);
 
   const ph=document.getElementById("persHint"), zuViel = pers>maxP;
-  ph.textContent = zuViel ? "Achtung: Die Pauschale gilt für maximal "+maxP+" Personen." : (kat==="oeffentlich" ? "Tagespauschale gilt für bis zu "+maxP+" Personen." : "");
+  ph.textContent = zuViel ? "Achtung: Die Pauschale gilt für maximal "+maxP+" Personen." : (kat==="oeffentlich" ? "Tagessatz gilt für bis zu "+maxP+" Personen." : "");
   ph.classList.toggle("need", zuViel);
   document.querySelectorAll(".pers").forEach(i=>i.classList.toggle("need", zuViel));
 
@@ -920,7 +938,7 @@ function syncForm(base, reise, netto, pers, maxP, tage){
   rh.className = "hint"+(code?(rabattOk(S)?" ok":" need"):"");
 
   const std=defaultPreis(S), pl=document.getElementById("preisLabel"), phi=document.getElementById("preisHint");
-  pl.textContent = kat==="oeffentlich" ? "Tagespauschale (€ netto)" : "Workshop-Pauschale (€ netto)";
+  pl.textContent = kat==="oeffentlich" ? "Tagessatz (€ netto)" : "Workshop-Pauschale (€ netto)";
   phi.textContent = num(sch.preis)===num(std) ? "" : "Preis angepasst (Standard: "+eur(num(std))+").";
   phi.className = "hint need";
 
@@ -965,7 +983,7 @@ document.getElementById("form").addEventListener("input", e=>{
   const el=e.target; if(!el.dataset.k) return;
   set(S, el.dataset.k, el.type==="checkbox"?el.checked:(el.type==="number"?(el.value===""?"":+el.value):el.value));
   // Kurs aus der Liste gewählt → Dauer übernehmen
-  if(el.dataset.k==="schulung.kurs"){ const ki=kursInfo(el.value); if(ki){ S.schulung.tage=ki.tage; fillForm(); } }
+  if(el.dataset.k==="schulung.kurs"){ const ki=kursInfo(el.value); if(ki){ S.schulung.tage=ki.tage; S.schulung.halbeTage=0; fillForm(); } }
   if(el.dataset.k==="schulung.personen") fillForm();   // beide Teilnehmer-Felder synchron halten
   if(el.dataset.k==="schulung.format"){ S.schulung.preis=defaultPreis(S); fillForm(); }   // Standardpreis des Formats vorauswählen
   render();
