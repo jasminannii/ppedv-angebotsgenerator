@@ -162,10 +162,6 @@ h3.sec{font-size:11.2pt;color:var(--navy);margin:4.5mm 0 1mm;font-weight:700;let
 .step b{display:block;color:var(--navy);font-size:9.4pt;margin-bottom:.6mm}
 .step span{font-size:8.5pt;color:var(--ink)}
 
-.take{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2mm}
-.take div{background:var(--soft);border-radius:2.5mm;padding:2.6mm 3.2mm 2.6mm 10mm;font-size:8.2pt;position:relative}
-.take div::before{content:"✓";display:inline-flex;width:5.5mm;height:5.5mm;border-radius:50%;background:var(--orange);color:#fff;font-weight:700;align-items:center;justify-content:center;font-size:8pt;position:absolute;left:3mm;top:2.8mm}
-.take b{display:block;color:var(--navy);font-size:9pt;margin-bottom:.6mm}
 
 .target{margin-top:2.5mm;font-size:8.4pt;color:var(--ink);border-left:1mm solid var(--navy2);padding:1mm 0 1mm 3.5mm}
 .target b{color:var(--navy)}
@@ -304,6 +300,7 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
           </div>
           <p class="hint" id="preisHint"></p>
           <p class="hint" id="rabattHint"></p>
+          <label class="check" data-cat="oeffentlich"><input type="checkbox" data-k="schulung.vorbereitung"> Vorbereitung berechnen (halbe Schulungsdauer × Tagessatz)</label>
         </div>
 
         <div id="reiseBox" class="box">
@@ -323,6 +320,13 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
             <div><label>Preis je Kurs (€ netto)</label><input type="number" min="0" step="50" data-k="schulung.preis"></div>
             <div><label>Anreise je Vor-Ort-Termin (€)</label><input type="number" min="0" step="50" data-k="reise.proTermin" placeholder="nach Aufwand"></div>
           </div>
+        </div>
+        <div class="box">
+          <div class="sub" style="margin:0;padding:0;border:0">Details im Angebot <small style="font-weight:400;color:var(--ui-muted)">· leer = nicht im Angebot</small></div>
+          <label>Technologien</label><input data-k="details.technik" placeholder="z. B. Microsoft 365 Copilot, Power Automate, SharePoint">
+          <label>Vorkenntnisse der Teilnehmer</label><input data-k="details.vorkenntnisse" placeholder="z. B. keine / Grundkenntnisse Microsoft 365">
+          <label>Voraussetzungen</label><input data-k="details.voraussetzungen" placeholder="z. B. Copilot-Lizenzen und Tenant-Zugang vorhanden">
+          <label>Teilnehmerunterlagen</label><input data-k="details.unterlagen">
         </div>
         <label>Weitere Positionen <small>(optional · Bezeichnung | Beschreibung | Menge | Einzelpreis netto)</small></label><textarea data-k="positionen" rows="2"></textarea>
       </details>
@@ -346,7 +350,6 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
         <label>Problem → Lösung <small>(Problem | Lösung | Erklärung)</small></label><textarea data-k="produkt.nutzen" rows="4"></textarea>
         <label>Ablauf – Untertitel</label><input data-k="produkt.stepsIntro">
         <label>Ablauf-Schritte <small>(Titel | Text)</small></label><textarea data-k="produkt.steps" rows="4"></textarea>
-        <label>Was Ihr Team mitnimmt <small>(Titel | Text)</small></label><textarea data-k="produkt.takeaways" rows="3"></textarea>
         <label>Zielgruppe</label><textarea data-k="produkt.zielgruppe" rows="3"></textarea>
         <label>Hinweis-Box</label><textarea data-k="produkt.hinweis" rows="2"></textarea>
         <label>Link zur Kursseite</label><input data-k="produkt.link">
@@ -399,13 +402,13 @@ const PRESETS = {
     produkt: {
       eyebrow: "Inhouse-Workshop · KI im Arbeitsalltag",
       titel: "KI-Abläufe, die funktionieren.",
-      untertitel: "Ein Prompt hilft einmal. Ihr Team lernt, aus vorhandenem Wissen, klaren Regeln und wiederverwendbaren Arbeitsanweisungen einen verlässlichen KI-Ablauf zu bauen – für weniger Routinearbeit und gleichbleibend gute Ergebnisse.",
+      untertitel: "Ein Prompt hilft einmal. Ihr Team lernt, aus vorhandenem Wissen, klaren Regeln und wiederverwendbaren Arbeitsanweisungen einen KI-Ablauf zu bauen.",
       chips: "1 Tag\nEinsteiger\nmax. 10 Personen\nonline · Trainingscenter · vor Ort\nohne Programmierkenntnisse",
       nutzenTitel: "Ein guter Prompt ist noch kein verlässlicher Ablauf.",
       nutzen: "Wiederkehrende Aufgaben kosten immer wieder Zeit | Ein Skill statt einmaliger Prompts | Eine wiederverwendbare Arbeitsanweisung: Die KI prüft nach einheitlichen Kriterien und liefert eine nachvollziehbare Empfehlung.\nDer KI fehlt Ihr Unternehmenswissen | Wissen und Beispiele geordnet | Eine Wissensbasis, auf die die KI gezielt zugreift.\nEntscheidungsregeln bleiben unausgesprochen | Regeln und Grenzen sichtbar | Kriterien, Ausnahmen und Prüfschritte festgehalten und prüfbar.",
       stepsIntro: "An einem vorbereiteten, typischen Vorgang aus Ihrer Branche.",
       steps: "Vorgang verstehen | Welche Schritte kosten Zeit, welche Informationen braucht es, wo entscheidet Erfahrung?\nWissensbasis aufbauen | Informationen, Vorlagen und Hintergrundwissen so ordnen, dass die KI gezielt darauf zugreift.\nRegeln & Skill entwickeln | Kriterien, Ausnahmen und Prüfschritte festhalten – daraus entsteht der Skill.\nTesten & verbessern | Verschiedene Fälle zeigen Lücken, bis die Ergebnisse nachvollziehbar und brauchbar sind.",
-      takeaways: "Ein nachvollziehbares Branchenbeispiel | mit Informationen, Entscheidungsregeln und menschlichen Prüfpunkten.\nEin erprobtes Vorgehensmodell für KI-Skills | wie Wissen, Regeln, Ausnahmen und Qualitätskriterien zusammenspielen.\nEinen realistischen nächsten Schritt | für die Übertragung auf eigene Aufgaben im Unternehmen.",
+      takeaways: "",
       zielgruppe: "Für Teamleiter, Entscheider und ihre Fachbereiche, die wiederkehrende Aufgaben einfacher und verlässlicher erledigen möchten. KI- oder IT-Vorkenntnisse sind nicht nötig.",
       hinweis: "Die Verantwortung bleibt beim Menschen: Ihr Team legt fest, wann geprüft, ergänzt oder freigegeben wird.",
       link: ""
@@ -424,7 +427,7 @@ const PRESETS = {
       nutzen: "Jeder Vorgang startet wieder bei null | Ein wiederverwendbarer Copilot-Ablauf | Ein klarer Workflow startet bei jedem neuen Fall nach demselben Muster.\nDer KI fehlt das nötige Fachwissen | Eine geordnete Wissensbasis | Geeignete Quellen werden sicher und gezielt für Copilot nutzbar gemacht.\nEntscheidungsregeln sind nur im Kopf | Regeln, Ausnahmen und Prüfpunkte | Fachwissen wird zu einem Skill oder Agenten – mit menschlicher Freigabe.",
       stepsIntro: "An einem vorbereiteten, typischen Vorgang – von der Prozessaufnahme bis zum getesteten Ablauf.",
       steps: "Vorgang verstehen | Auslöser, Schritte, Entscheidungen und gewünschte Ergebnisse sichtbar machen.\nWissen und Regeln ordnen | Quellen, Beispiele, Kriterien, Ausnahmen und Prüfpunkte strukturieren.\nCopilot-Ablauf bauen | Die Bausteine zu einem Skill oder Agenten verbinden und passende Dienste ergänzen.\nTesten und verbessern | Mehrere Fälle prüfen, Lücken erkennen und Regeln schärfen.",
-      takeaways: "Einen nachvollziehbaren Beispielprozess | mit Auslöser, Wissen, Regeln, Ausnahmen und Prüfpunkten.\nEin erprobtes Vorgehensmodell | für Skills, Agenten und passende Microsoft-Dienste.\nEin Auswahlraster für eigene Prozesse | zur realistischen Bewertung von Automatisierungsideen.",
+      takeaways: "",
       zielgruppe: "Für Teamleiter, Entscheider, Fachbereiche und Digitalisierungsverantwortliche – überall dort, wo Informationen gesammelt, Regeln angewendet, Entwürfe erstellt oder Entscheidungen vorbereitet werden. KI- oder Programmierkenntnisse sind nicht erforderlich.",
       hinweis: "Die Technik folgt dem Prozess: Je nach Aufgabe kommen Microsoft 365 Copilot, Copilot Studio, SharePoint, Power Automate oder weitere passende Dienste zum Einsatz. Es wird kein konkreter Kundenprozess produktiv automatisiert.",
       link: "https://ppedv.de/schulung/kurse/microsoft-copilot-oekosystem"
@@ -542,14 +545,14 @@ const KATEGORIEN = {
   oeffentlich: {
     betreff: "", personen: 6,
     brief: "vielen Dank für das angenehme Gespräch und Ihr Interesse an Wissensvermittlung. Wie besprochen erhalten Sie unser Angebot für die Schulung Ihres Teams – zur Tagespauschale, online oder an einem ppedv-Standort.\n\nAuf der folgenden Seite finden Sie alle Rahmendaten und die Preisübersicht. Gerne stimmen wir Inhalte und Schwerpunkte vorab mit Ihnen ab.",
-    rahmen: "Termin | nach Vereinbarung\nUnterlagen | Schulungsunterlagen\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive",
+    rahmen: "Termin | nach Vereinbarung\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive",
     positionen: "",
     produkt: { eyebrow: "Schulung · ppedv Kursprogramm", titel: "", untertitel: "Praxisnahe Schulung mit erfahrenen ppedv-Trainern – exklusiv für Ihr Team, live online oder an einem ppedv-Standort.",
       chips: "", nutzenTitel: "", nutzen: "", stepsIntro: "", steps: "", takeaways: "", zielgruppe: "", hinweis: "", link: "" }
   },
   inhouse: {
     personen: 10, brief: BRIEF_WORKSHOP,
-    rahmen: "Termin | nach Vereinbarung\nVorbereitung | Praxisfall & Ziele vorab mit dem Trainer\nUnterlagen | Slides & Samples (bei Verfügbarkeit)\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive"
+    rahmen: "Termin | nach Vereinbarung\nVorbereitung | Praxisfall & Ziele vorab mit dem Trainer\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive"
   },
   kompetenz: {
     betreff: "Ihr Angebot: Kompetenzmodell", personen: "",
@@ -568,7 +571,8 @@ function blank(){
     kunde:{firma:"",anrede:"Frau",vorname:"",nachname:"",strasse:"",plz:"",ort:"",kundennr:"",email:""},
     angebot:{nr:"",datum:today(),gueltig:14,betreff:"",datei:"",brief:BRIEF_WORKSHOP},
     produkt:{},
-    schulung:{kurs:"",tage:1,personen:10,format:"online",standort:"Burghausen",rabatt:""},
+    schulung:{kurs:"",tage:1,personen:10,format:"online",standort:"Burghausen",rabatt:"",vorbereitung:false},
+    details:{technik:"",vorkenntnisse:"",voraussetzungen:"",unterlagen:"Präsentationen und Labs"},
     reise:{km:0,naechte:0,kmSatz:0.6,hotel:90,proTermin:""},
     matrix:null,
     rahmen:"", positionen:"",
@@ -677,6 +681,8 @@ function calc(s){
     const tp=num(sch.preis);
     base=t*tp;
     pos.push({bez:"Schulung „"+(sch.kurs||"…")+"“", txt:tageText(t)+" × Tagespauschale "+eur(tp)+", bis "+PREIS.maxPersonenSchulung+" Personen", menge:t, preis:tp});
+    // Vorbereitung kalkulatorisch mit halber Schulungsdauer
+    if(sch.vorbereitung){ const h=t/2; pos.push({bez:"Vorbereitung Trainer", txt:String(h).replace(".",",")+" "+(h==1?"Tag":"Tage")+" (halbe Schulungsdauer) × "+eur(tp), menge:h, preis:tp}); }
   }
   if(s.kategorie==="inhouse"){
     base=num(sch.preis);
@@ -753,8 +759,10 @@ function render(){
   const auto = kat==="kompetenz"
     ? (mx ? [["Laufzeit", mx.wochen?"ca. "+mx.wochen+" Wochen ab Zusage":"nach Absprache"], ["Kurse", mxN+(mxV&&mxV<mxN?" (davon "+mxV+" vor Ort)":"")], ["Format", MATRIX_FORMATE[mx.format]||""]].concat(mx.mitarbeitende?[["Mitarbeiter", String(mx.mitarbeitende)]]:[]) : [])
     : [["Dauer", kat==="oeffentlich"?tageText(tage):"1 Tag"], ["Teilnehmer", persText], ["Format", formatText(S).replace(/^[ob]/,c=>c.toUpperCase())]];
-  const rahmen = auto.concat(parts(S.rahmen));
-  const nutzen = parts(p.nutzen), steps = parts(p.steps), take = parts(p.takeaways);
+  const dt = S.details||{};
+  const details = [["Technologien",dt.technik],["Vorkenntnisse",dt.vorkenntnisse],["Voraussetzungen",dt.voraussetzungen],["Unterlagen",dt.unterlagen]].filter(r=>String(r[1]||"").trim());
+  const rahmen = auto.concat(details, parts(S.rahmen));
+  const nutzen = parts(p.nutzen), steps = parts(p.steps);
   const reiseHinweis = reiseAktiv(S) && !reise ? "Zzgl. Reisekosten des Trainers, 1:1 nach Aufwand."
     : mx && mxV && !reise ? "Zzgl. Anreise für "+mxV+" Vor-Ort-"+(mxV==1?"Termin":"Termine")+" (nach Aufwand)." : "";
   const kursplan = mx ? `
@@ -834,10 +842,6 @@ function render(){
       ${steps.map((r,i)=>`<div class="step"><div class="n">${i+1}</div><div><b>${esc(r[0])}</b><span>${esc(r[1]||"")}</span></div></div>`).join("")}
     </div>`:""}
 
-    ${take.length?`
-    <div class="kicker">Ergebnis</div>
-    <h3 class="sec" style="margin-bottom:3mm">Was Ihr Team mitnimmt</h3>
-    <div class="take">${take.map(r=>`<div><b>${esc(r[0])}</b>${esc(r[1]||"")}</div>`).join("")}</div>`:""}
     ${p.zielgruppe?`<div class="target"><b>Zielgruppe:</b> ${esc(p.zielgruppe)}</div>`:""}`;
 
   const konditionen = `
