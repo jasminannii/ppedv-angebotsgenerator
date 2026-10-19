@@ -314,7 +314,7 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
         <div data-cat="kompetenz">
           <div class="box" style="margin-top:0">
             <div class="sub" style="margin:0;padding:0;border:0">Aus der Kompetenzmatrix übernehmen</div>
-            <label>Link aus der Matrix <small>(Abschluss → „Angebot im Angebotsgenerator“)</small></label>
+            <label>Link aus der Matrix <small>(nur nötig, wenn sich der Generator nicht von selbst öffnet)</small></label>
             <div class="inrow"><input id="mxLink" placeholder="Link einfügen …" autocomplete="off"><button type="button" class="btn2" id="mxGo">Übernehmen</button></div>
             <p class="hint" id="mxInfo"></p>
           </div>
@@ -945,7 +945,7 @@ function syncForm(base, reise, netto, pers, maxP){
   const mi=document.getElementById("mxInfo"), mxd=S.matrix;
   mi.innerHTML = mxd && mxd.kurse.length
     ? "✓ "+mxd.kurse.length+" "+(mxd.kurse.length==1?"Kurs":"Kurse")+" übernommen · "+esc(MATRIX_FORMATE[mxd.format]||"")+(mxd.bestand?" · Bestandskunde":"")+(mxd.kartei?` · <a href="${esc(mxd.kartei)}" target="_blank" rel="noopener">Kartei öffnen</a>`:"")
-    : "Noch keine Daten übernommen.";
+    : "Normalerweise nicht nötig: In der Matrix unter Abschluss auf „Angebot erstellen“ klicken – der Generator öffnet sich fertig ausgefüllt. Der Link liegt dann auch in der Zwischenablage (Strg+V).";
   mi.className = "hint"+(mxd && mxd.kurse.length ? " ok" : "");
 
   // Kurzstatus in den Schritt-Überschriften
