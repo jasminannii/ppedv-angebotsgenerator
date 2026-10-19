@@ -444,7 +444,8 @@ const PREIS = {
   tagessatz: 2190, halberTag: 1390, maxPersonenSchulung: 6,   // Kategorie 1 (Tagessatz ohne Vorbereitung)
   inhouse: { online: 3500, standort: 3500, kunde: 4200 },    // Kategorie 2 (wie auf ppedv.de)
   maxPersonenInhouse: 10, rabattCode: "bestandskunde20", rabatt: 0.20,
-  kompetenzKurs: 3500, kompetenzKursBestand: 2800          // Kategorie 3 (wie in der Kompetenzmatrix)
+  kompetenzKurs: 3500, kompetenzKursBestand: 2800,         // Kategorie 3 (wie in der Kompetenzmatrix)
+  wiederholRabatt: 0.20                                     // jeder weitere Durchgang ab 11 Teilnehmern
 };
 const STANDORTE = ["Burghausen","München","Berlin","Wien"];
 
@@ -651,7 +652,8 @@ function angebotAusMatrix(d, alt){
 }
 // ppedv gendert nicht: Texte aus der Matrix für das Angebot angleichen
 function ungendern(t){ return String(t).replace(/Teilnehmende(n?)/g,"Teilnehmer").replace(/Mitarbeitende(n?)/g,"Mitarbeiter"); }
-function vorOrtTermine(s){ return s.matrix ? s.matrix.kurse.filter(c=>c.ort!=="online").length : 0; }
+// jeder Durchgang vor Ort ist ein eigener Termin mit Anreise
+function vorOrtTermine(s){ return s.matrix ? s.matrix.kurse.filter(c=>c.ort!=="online").reduce((x,c)=>x+durchgaenge(c.tn),0) : 0; }
 function applyPreset(s,key){
   const p = PRESETS[key];
   s.produkt = JSON.parse(JSON.stringify(p.produkt));
@@ -683,6 +685,12 @@ function tageKat1(sch){
   return {g,h};
 }
 function zahl(n){ return String(n).replace(".",","); }
+// Mehr als 10 Teilnehmer (Inhouse/Kompetenzmodell): Kurs wird mehrfach gebucht, jeder weitere Durchgang −20 %
+function durchgaenge(teilnehmer){ const n=parseInt(String(teilnehmer||"").replace(/\D+/g,""),10)||0; return Math.max(1, Math.ceil(n/PREIS.maxPersonenInhouse)); }
+function weitereDurchgaenge(anzahl, preis){
+  const p=Math.round(preis*(1-PREIS.wiederholRabatt));
+  return {bez:"Weitere "+(anzahl==1?"Durchgang":"Durchgänge")+" (−20 %)", txt:anzahl+" × "+eur(p)+" · ab 11 Teilnehmern wird der Kurs mehrfach gebucht, je bis zu 10 Personen", menge:anzahl, preis:p};
+}
 function dauerText(g,h){ return [g?tageText(g):"", h?h+" "+(h==1?"halber Tag":"halbe Tage"):""].filter(Boolean).join(" + "); }
 const ZEIT_GANZ = "09.00–17.00 Uhr", ZEIT_HALB = "halbtags 09.00–12.30 oder 13.30–17.00 Uhr";
 function zeitenText(s){
@@ -703,14 +711,18 @@ function calc(s){
   }
   if(s.kategorie==="inhouse"){
     base=num(sch.preis);
+    const d=durchgaenge(sch.personen);
     pos.push({bez:PRESETS[s.preset].leistung, txt:"1 Tag, bis "+PREIS.maxPersonenInhouse+" Personen, inkl. Vorbereitung", menge:1, preis:base});
-    if(rabattOk(s)) pos.push({bez:"Rabatt Bestandskunde (−20 %)", txt:"", menge:1, preis:-Math.round(base*PREIS.rabatt)});
+    if(d>1) pos.push(weitereDurchgaenge(d-1, base));
+    if(rabattOk(s)) pos.push({bez:"Rabatt Bestandskunde (−20 %)", txt:"auf die Pauschale des ersten Durchgangs", menge:1, preis:-Math.round(base*PREIS.rabatt)});
   }
   let reise=0;
   if(s.kategorie==="kompetenz" && s.matrix && s.matrix.kurse.length){
     const n=s.matrix.kurse.length, p=num(sch.preis), v=vorOrtTermine(s), a=num(r.proTermin);
+    const extra=s.matrix.kurse.reduce((x,c)=>x+durchgaenge(c.tn)-1,0);
     base=n*p;
     pos.push({bez:n+" "+(n==1?"Kurs":"Kurse")+" laut Kursplan", txt:"je Kurs pauschal "+eur(p)+" für bis zu 10 Teilnehmer"+(s.matrix.bestand?" · Bestandskundenpreis":""), menge:n, preis:p});
+    if(extra) pos.push(weitereDurchgaenge(extra, p));
     if(v && a){ reise=v*a; pos.push({bez:"Reisekosten", txt:v+" Vor-Ort-"+(v==1?"Termin":"Termine")+" × "+eur(a), menge:v, preis:a}); }
   }
   if(reiseAktiv(s)){
@@ -748,7 +760,53 @@ function footer(n,total){
   return `<div class="foot">${FIRMA.foot.map(c=>`<div>${c.map(esc).join("<br>")}</div>`).join("")}<div class="pg">Seite ${n}/${total}</div></div>`;
 }
 
+// ---------- Details automatisch vorschlagen (aus Kursen, Workshop und Format) ----------
+// Technologien, Vorkenntnisse und Voraussetzungen werden aus den Kursen abgeleitet.
+// Was im Formular selbst eingetragen wird (details._manual), bleibt unangetastet.
+const TECHNIK = [
+  [/GitHub Copilot/,"GitHub Copilot"], [/Copilot Studio/,"Copilot Studio"], [/^(?!.*(GitHub|Copilot Studio)).*Copilot/,"Microsoft 365 Copilot"],
+  [/Power Automate/,"Power Automate"], [/Power Apps/,"Power Apps"], [/Power BI/,"Power BI"], [/Dataverse|Power Platform/,"Power Platform"],
+  [/SharePoint/,"SharePoint"], [/Teams/,"Microsoft Teams"], [/Exchange/,"Exchange"], [/Microsoft 365|Office 365/,"Microsoft 365"],
+  [/Azure/,"Azure"], [/Entra/,"Entra ID"], [/Intune|Endpoint Manager/,"Intune"], [/Defender/,"Microsoft Defender"],
+  [/Fabric/,"Microsoft Fabric"], [/SQL/,"SQL Server"], [/Excel|VBA/,"Excel"], [/Python/,"Python"], [/PowerShell/,"PowerShell"],
+  [/Windows/,"Windows"], [/Docker|Kubernetes/,"Docker/Kubernetes"], [/\bGIT\b|\bGit\b/,"Git"], [/C#|\.NET|Blazor|WPF/,".NET"],
+  [/Java\b/,"Java"], [/Rust/,"Rust"], [/ChatGPT/,"ChatGPT"]
+];
+const EINSTIEG = /Grundlagen|Einstieg|Grundkurs|für Anwender|Jump Start|in 8h|Einsteiger|Workshop|Praxistag|Copilot - KI in|Prompt like/i;
+function detailVorschlag(s){
+  let kurse=[], online=false, vorOrt=false, extraTechnik=[];
+  if(s.kategorie==="kompetenz" && s.matrix && s.matrix.kurse.length){
+    kurse=s.matrix.kurse.map(c=>c.n); online=s.matrix.kurse.some(c=>c.ort==="online"); vorOrt=s.matrix.kurse.some(c=>c.ort!=="online");
+  } else if(s.kategorie==="oeffentlich" && s.schulung.kurs){
+    kurse=[s.schulung.kurs]; online=s.schulung.format==="online"; vorOrt=!online;
+  } else if(s.kategorie==="inhouse"){
+    kurse=[s.preset==="B"?"Copilot Praxistag":"Workshop KI-Abläufe"]; online=s.schulung.format==="online"; vorOrt=!online;
+    extraTechnik = s.preset==="B" ? ["Microsoft 365 Copilot","Copilot Studio","SharePoint","Power Automate"] : [];
+  } else return null;
+  const technik=[...new Set(extraTechnik.concat(TECHNIK.filter(([re])=>kurse.some(n=>re.test(n))).map(t=>t[1])))];
+  if(s.kategorie==="inhouse" && s.preset!=="B") technik.push("KI-Assistent nach Wahl (z. B. Microsoft 365 Copilot)");
+  if(kurse.some(n=>/Skill-Building/.test(n)) && !technik.some(t=>/Copilot/.test(t))) technik.push("KI-Assistent nach Wahl");
+  const ein=kurse.filter(n=>EINSTIEG.test(n)).length;
+  const vorkenntnisse = ein===kurse.length ? "keine besonderen Vorkenntnisse nötig"
+    : ein===0 ? "Grundkenntnisse im jeweiligen Thema" : "je nach Kurs keine Vorkenntnisse bis Grundkenntnisse";
+  const vor=[];
+  if(technik.includes("Microsoft 365 Copilot")) vor.push("Microsoft 365 Copilot-Lizenzen und Tenant-Zugang");
+  if(technik.some(t=>/Power Automate|Power Apps|Power Platform|Copilot Studio/.test(t))) vor.push("Zugang zur Power Platform");
+  if(kurse.some(n=>/Administration|Admin/.test(n))) vor.push("Test- bzw. Admin-Zugang nach Absprache");
+  if(vorOrt) vor.push("Raum mit Beamer und WLAN, Laptops für die Teilnehmer");
+  if(online) vor.push("PC mit Internet, Headset und Browser");
+  return {technik:technik.join(", "), vorkenntnisse, voraussetzungen:vor.join("; ")};
+}
+// Übernimmt den Vorschlag in alle Felder, die nicht selbst bearbeitet wurden
+function autoDetails(s){
+  const v=detailVorschlag(s); if(!v) return;
+  const d=s.details||(s.details={}), man=d._manual||{};
+  ["technik","vorkenntnisse","voraussetzungen"].forEach(k=>{ if(!man[k]) d[k]=v[k]; });
+  document.querySelectorAll('[data-k^="details."]').forEach(el=>{ if(el!==document.activeElement) el.value=get(s,el.dataset.k)??""; });
+}
+
 function render(){
+  autoDetails(S);
   const k=S.kunde, a=S.angebot, p=S.produkt, sch=S.schulung, kat=S.kategorie;
   const {pos, netto, base, reise} = calc(S);
   const mw = netto*(num(S.preis.mwst)/100);
@@ -758,7 +816,9 @@ function render(){
   const {g:tg, h:th} = tageKat1(sch), dauer = dauerText(tg, th);
   const maxP = kat==="oeffentlich" ? PREIS.maxPersonenSchulung : PREIS.maxPersonenInhouse;
   const pers = num(sch.personen);
-  const persText = pers ? pers+" "+(pers==1?"Person":"Personen")+" (max. "+maxP+")" : "bis zu "+maxP+" Personen";
+  const dg = kat==="inhouse" ? durchgaenge(pers) : 1;
+  const persText = dg>1 ? pers+" Personen in "+dg+" Durchgängen (je max. "+maxP+")"
+    : pers ? pers+" "+(pers==1?"Person":"Personen")+" (max. "+maxP+")" : "bis zu "+maxP+" Personen";
   const kurs = kursInfo(sch.kurs);
   // Kategorie 1: Titel, Betreff, Eckdaten und Link ergeben sich aus dem gewählten Kurs
   const titel = p.titel || (kat==="oeffentlich" ? (sch.kurs||"Schulung") : "");
@@ -770,12 +830,12 @@ function render(){
   const mxChips = mx ? [mxN+" "+(mxN==1?"Kurs":"Kurse"), MATRIX_FORMATE[mx.format]||"", mx.mitarbeitende?mx.mitarbeitende+" Mitarbeiter":""].filter(Boolean) : [];
   const chips = (kat==="oeffentlich" ? [dauer, "bis zu "+maxP+" Personen", sch.format==="online"?"online":"ppedv-Standort "+sch.standort] : mx ? mxChips : []).concat(mx ? [] : lines(p.chips));
   const teaser = kat==="oeffentlich" ? dauer+" · bis zu "+maxP+" Personen · Tagessatz"
-    : kat==="inhouse" ? "1 Tag · bis zu "+maxP+" Personen · Festpreis für Ihr Team"
+    : kat==="inhouse" ? (dg>1 ? dg+" Durchgänge à 1 Tag · je bis zu "+maxP+" Personen" : "1 Tag · bis zu "+maxP+" Personen · Festpreis für Ihr Team")
     : mx ? mxN+" "+(mxN==1?"Kurs":"Kurse")+" × "+eur(num(sch.preis))+" · Zeitraum nach Vereinbarung"
     : chips.slice(0,2).join(" · ");
   const auto = (kat==="kompetenz"
     ? (mx ? [["Zeitraum", "nach Vereinbarung"], ["Kurse", mxN+(mxV&&mxV<mxN?" (davon "+mxV+" vor Ort)":"")], ["Format", MATRIX_FORMATE[mx.format]||""]].concat(mx.mitarbeitende?[["Mitarbeiter", String(mx.mitarbeitende)]]:[]) : [])
-    : [["Dauer", kat==="oeffentlich"?dauer:"1 Tag"], ["Teilnehmer", persText], ["Format", formatText(S).replace(/^[ob]/,c=>c.toUpperCase())]])
+    : [["Dauer", kat==="oeffentlich"?dauer:dg>1?"1 Tag je Durchgang":"1 Tag"], ["Teilnehmer", persText], ["Format", formatText(S).replace(/^[ob]/,c=>c.toUpperCase())]])
     .concat([["Schulungszeiten", zeitenText(S)]]);
   const dt = S.details||{};
   const details = [["Technologien",dt.technik],["Vorkenntnisse",dt.vorkenntnisse],["Voraussetzungen",dt.voraussetzungen],["Unterlagen",dt.unterlagen]].filter(r=>String(r[1]||"").trim());
@@ -788,7 +848,7 @@ function render(){
     <h3 class="sec" style="margin-bottom:2.5mm">${mxN} ${mxN==1?"Kurs":"Kurse"} nach Priorität</h3>
     <table class="plan">
       <tr><th>#</th><th>Kurs</th><th>Dauer</th><th>Ort</th><th>Team</th></tr>
-      ${mx.kurse.map((c,i)=>`<tr><td>${i+1}</td><td>${esc(c.n)}${c.pflicht?" <em>immer dabei</em>":""}</td><td>${esc(c.t||"")}</td><td>${esc(c.ort||"")}</td><td>${esc(c.team||"")}${c.tn?` <small>(${esc(c.tn)})</small>`:""}</td></tr>`).join("")}
+      ${mx.kurse.map((c,i)=>`<tr><td>${i+1}</td><td>${esc(c.n)}${c.pflicht?" <em>immer dabei</em>":""}</td><td>${esc(c.t||"")}</td><td>${esc(c.ort||"")}</td><td>${esc(c.team||"")}${c.tn?` <small>(${esc(c.tn)}${durchgaenge(c.tn)>1?" · "+durchgaenge(c.tn)+" Durchgänge":""})</small>`:""}</td></tr>`).join("")}
     </table>` : "";
   const ablaufKicker = kat==="kompetenz" ? "Projektablauf" : "Der Workshop-Tag";
   const ablaufTitel = kat==="kompetenz" ? "In vier Phasen vom Plan in den Alltag" : "So entsteht Ihr verlässlicher Ablauf";
@@ -928,9 +988,13 @@ function syncForm(base, reise, netto, pers, maxP){
   document.getElementById("standortWrap").hidden = sch.format!=="standort";
   document.getElementById("reiseBox").hidden = !reiseAktiv(S);
 
-  const ph=document.getElementById("persHint"), zuViel = pers>maxP;
-  ph.textContent = zuViel ? "Achtung: Die Pauschale gilt für maximal "+maxP+" Personen." : (kat==="oeffentlich" ? "Tagessatz gilt für bis zu "+maxP+" Personen." : "");
-  ph.classList.toggle("need", zuViel);
+  // Inhouse: mehr als 10 Personen = mehrere Durchgänge (Hinweis, kein Fehler)
+  const mehrfach = kat==="inhouse" && pers>maxP, zuViel = pers>maxP && !mehrfach;
+  const ph=document.getElementById("persHint");
+  ph.textContent = zuViel ? "Achtung: Der Tagessatz gilt für maximal "+maxP+" Personen."
+    : mehrfach ? durchgaenge(pers)+" Durchgänge à max. "+maxP+" Personen – jeder weitere Durchgang −20 %."
+    : (kat==="oeffentlich" ? "Tagessatz gilt für bis zu "+maxP+" Personen." : "");
+  ph.classList.toggle("need", zuViel); ph.classList.toggle("ok", mehrfach);
   document.querySelectorAll(".pers").forEach(i=>i.classList.toggle("need", zuViel));
 
   const rh=document.getElementById("rabattHint"), code=String(sch.rabatt||"").trim();
@@ -982,6 +1046,8 @@ function fillForm(){
 document.getElementById("form").addEventListener("input", e=>{
   const el=e.target; if(!el.dataset.k) return;
   set(S, el.dataset.k, el.type==="checkbox"?el.checked:(el.type==="number"?(el.value===""?"":+el.value):el.value));
+  // Details selbst bearbeitet → nicht mehr automatisch überschreiben (leeres Feld = wieder automatisch)
+  if(/^details\.(technik|vorkenntnisse|voraussetzungen)$/.test(el.dataset.k)){ const d=S.details, k=el.dataset.k.split(".")[1]; (d._manual||(d._manual={}))[k]=el.value.trim()!==""; }
   // Kurs aus der Liste gewählt → Dauer übernehmen
   if(el.dataset.k==="schulung.kurs"){ const ki=kursInfo(el.value); if(ki){ S.schulung.tage=ki.tage; S.schulung.halbeTage=0; fillForm(); } }
   if(el.dataset.k==="schulung.personen") fillForm();   // beide Teilnehmer-Felder synchron halten

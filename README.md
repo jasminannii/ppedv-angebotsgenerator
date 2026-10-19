@@ -38,3 +38,5 @@ Dateiname immer `ANG-<Kunden-Nr.>_<Unternehmen>`; die Angebotsnummer ist die Kun
 - Zahlungsbedingung: monatlich nach Leistungserbringung, 10 Tage netto
 - Digitales ppedv Teilnehmerzertifikat inklusive; nicht gendern; keine Ergebnisversprechen
 - Kompetenzmodell: Zeitraum nach Vereinbarung (keine Wochenangaben im Angebot)
+- Mehr als 10 Teilnehmer (Inhouse, Kompetenzmodell je Kurs): Kurs wird mehrfach gebucht, jeder weitere Durchgang −20 %; jeder Vor-Ort-Durchgang zählt als eigener Anreise-Termin
+- Technologien, Vorkenntnisse, Voraussetzungen werden aus Kursen/Workshop/Format vorgeschlagen (`detailVorschlag()`); eigene Einträge bleiben
