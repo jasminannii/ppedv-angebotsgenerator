@@ -961,8 +961,8 @@ function render(){
     </div>
     <div class="flow"><div class="flow-t">So geht es weiter</div>
       <div><i>1</i><span><b>Angebot bestätigen</b>eine kurze E-Mail genügt</span></div>
-      <div><i>2</i><span><b>Vorgespräch</b>${kat==="oeffentlich"?"Inhalte und Schwerpunkte mit dem Trainer abstimmen":kat==="kompetenz"?"Ziele, Inhalte und Zeitplan gemeinsam festlegen":"Praxisfall und Ziele mit dem Trainer abstimmen"}</span></div>
-      <div><i>3</i><span><b>${kat==="kompetenz"?"Termine festlegen":"Termin festlegen"}</b>${kat==="kompetenz"?"vor Ort und online, über mehrere Monate":esc(formatText(S))}</span></div>
+      <div><i>2</i><span><b>Vorgespräch und Terminfixierung</b>${kat==="oeffentlich"?"Schwerpunkte abstimmen und Termin festlegen":kat==="kompetenz"?"Ziele abstimmen und Termine festlegen":"Praxisfall abstimmen und Termin festlegen"}</span></div>
+      <div><i>3</i><span><b>Kompetenzen aneignen</b>${kat==="kompetenz"?"vor Ort und online, über mehrere Monate":esc(formatText(S))}</span></div>
     </div>
   </div>${footer(1,total)}</section>`;
 
