@@ -11,7 +11,7 @@ A4-Vorschau; „PDF erstellen“ → im Druckdialog „Als PDF speichern“.
 2. **Inhouse-Workshop A/B** – KI-Abläufe oder Copilot-Praxistag: online/Standort 3.500 €,
    beim Kunden 4.200 €; Rabattcode `bestandskunde20` = −20 % auf die Pauschale (nicht auf die Anreise).
 3. **Kompetenzmodell** – kommt aus der Kompetenzmatrix
-   (https://ppedv-kompetenzmatrix.vercel.app, Abschluss → „Angebot erstellen“).
+   (https://ppedv-kompetenzmatrix.vercel.app, Abschluss → „Link für Angebotsgenerator“; Bestandskunde per Häkchen hier).
 
 Alle Preise sind vorausgewählt und im Formular änderbar (`PREIS` im Code).
 
