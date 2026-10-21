@@ -260,7 +260,7 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
 
       <details open class="fs nr-box">
         <summary><i class="n">2</i>Angebot<span class="sv" id="svNr"></span></summary>
-        <label>Kunden-Nr. = Angebots-Nr. <small>(Pflichtfeld)</small></label><input data-k="kunde.kundennr" id="nrInput" placeholder="Kundennummer eingeben" autocomplete="off">
+        <label>Ansprechpartner-ID aus Nina = Angebots-Nr. <small>(Pflichtfeld)</small></label><input data-k="kunde.kundennr" id="nrInput" placeholder="z. B. 86919" autocomplete="off">
         <p class="hint" id="nrHint"></p>
         <div class="row">
           <div style="grid-column:1/-1"><label>Ihr Kontakt bei ppedv</label><select id="abSelect"></select></div>
@@ -946,7 +946,7 @@ function render(){
         <div class="to"><b>${esc(k.firma)}</b><br>${person?"z. Hd. "+esc(person)+"<br>":""}${esc(k.strasse)}<br>${esc([k.plz,k.ort].filter(Boolean).join(" "))}</div>
       </div>
       <div class="meta">
-        <div><span>Angebots-/Kunden-Nr.</span><b>${nrOut}</b></div>
+        <div><span>Angebots-Nr.</span><b>${nrOut}</b></div>
         <div><span>Datum</span><b>${esc(dfmt(a.datum))}</b></div>
         <div><span>Gültig bis</span><b>${esc(dfmt(addDays(a.datum,a.gueltig)))}</b></div>
         <div><span>Ihr Kontakt</span><b>${esc(S.absender.name)}</b></div>
@@ -1116,7 +1116,7 @@ function syncForm(base, reise, netto, pers, maxP){
     `<div class="tot"><span>Netto <b>${eur(netto)}</b></span><small>Brutto ${eur(netto+mw)}</small></div>`;
 }
 
-// Die Angebotsnummer ist immer die Kundennummer
+// Die Angebotsnummer ist immer die Ansprechpartner-ID aus Nina (z. B. 86919); Feldname kundennr aus Kompatibilität
 function angebotsNr(s){ return String(s.kunde.kundennr||"").trim(); }
 
 // Dateiname: immer „ANG-<Angebotsnummer>_<Unternehmen>“ (unzulässige Zeichen entfernt)

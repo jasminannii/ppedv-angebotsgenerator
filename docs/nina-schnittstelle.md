@@ -44,7 +44,8 @@ Antwort (JSON), nur die Felder, die ins Angebot gehören:
 
 - `ansprechpartner`: die Person mit dieser ID – sie wird im Angebot angeschrieben.
 - `kundennummer`, `firma`, Adresse: von der Firma, zu der der Ansprechpartner gehört.
-  Die Kundennummer ist bei uns zugleich die Angebotsnummer (Dateiname `ANG-<Kundennummer>_<Firma>`).
+  Die **Angebotsnummer ist die Ansprechpartner-ID** (Dateiname `ANG-<Ansprechpartner-ID>_<Firma>`);
+  die Kundennummer wird nur zur Information mitgeliefert.
 - `betreuer`: der **Besitzer** des Kunden in Nina – wird im Angebot „Ihr Kontakt bei ppedv“.
 - Optional, falls einfach: dieselbe Antwort über die Kundennummer
   (`GET …/api/angebot/kunde/{kundennummer}`, dann mit allen Ansprechpartnern als Liste).

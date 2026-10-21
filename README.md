@@ -30,7 +30,7 @@ Lesen: `leseMatrix()` / `angebotAusMatrix()`. Erzeugt in der Matrix von `matrixF
 - `serve.ps1` – kleiner lokaler Webserver für die Vorschau
 - `angebote/` – lokale Beispiel-Angebote, **nicht im Repo** (Kundendaten)
 
-Dateiname immer `ANG-<Kunden-Nr.>_<Unternehmen>`; die Angebotsnummer ist die Kundennummer.
+Dateiname immer `ANG-<Angebots-Nr.>_<Unternehmen>`; die Angebotsnummer ist die **Ansprechpartner-ID aus Nina** (z. B. 86919, aus `…/adressen/ansprechpartneredit/{id}`).
 
 ## Feste Texte
 
