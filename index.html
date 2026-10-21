@@ -155,6 +155,8 @@ h3.sec{font-size:11.2pt;color:var(--navy);margin:4.5mm 0 1mm;font-weight:700;let
 .price-teaser .r{text-align:right}
 .price-teaser .r b{font-size:15.5pt;color:var(--navy);font-weight:700;letter-spacing:-.01em}
 .price-teaser .r span{display:block;font-size:7.6pt;color:var(--muted)}
+.price-teaser .r s{display:block;font-size:9pt;color:var(--muted);font-weight:400}
+.price-teaser .l em.spar{display:block;font-style:normal;font-weight:600;color:var(--orange);font-size:8.4pt;margin-top:.6mm}
 
 .steps{display:grid;grid-template-columns:1fr 1fr;gap:2.2mm}
 .step{border:1px solid var(--line);border-radius:2.5mm;padding:2.6mm 3.5mm 2.4mm;display:grid;grid-template-columns:8.5mm 1fr;gap:2mm}
@@ -257,6 +259,10 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
         <summary><i class="n">2</i>Angebot<span class="sv" id="svNr"></span></summary>
         <label>Kunden-Nr. = Angebots-Nr. <small>(Pflichtfeld)</small></label><input data-k="kunde.kundennr" id="nrInput" placeholder="Kundennummer eingeben" autocomplete="off">
         <p class="hint" id="nrHint"></p>
+        <div class="row">
+          <div style="grid-column:1/-1"><label>Ihr Kontakt bei ppedv</label><select id="abSelect"></select></div>
+        </div>
+        <label class="check"><input type="checkbox" data-k="absender.iv"> „i.V.“ vor dem Namen</label>
         <div class="row"><div><label>Datum</label><input type="date" data-k="angebot.datum"></div><div><label>Gültigkeit (Tage)</label><input type="number" min="1" data-k="angebot.gueltig"></div></div>
       </details>
 
@@ -368,13 +374,6 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
         <div class="row"><div><label>USt. %</label><input type="number" data-k="preis.mwst"></div><div><label>Preis-Hinweis</label><input data-k="preis.hinweis"></div></div>
         <label class="check"><input type="checkbox" data-k="preis.brutto"> USt. und Bruttosumme ausweisen</label>
       </details>
-
-      <details class="fs opt">
-        <summary>Absender</summary>
-        <div class="row"><div><label>Name</label><input data-k="absender.name"></div><div><label>Funktion</label><input data-k="absender.rolle"></div></div>
-        <div class="row"><div><label>Telefon (Durchwahl)</label><input data-k="absender.tel"></div><div><label>E-Mail</label><input data-k="absender.email"></div></div>
-        <label class="check"><input type="checkbox" data-k="absender.iv"> „i.V.“ vor dem Namen</label>
-      </details>
       <p class="hint">Eingaben werden in diesem Browser automatisch zwischengespeichert. Für die Ablage pro Kunde „Speichern (.json)“ nutzen.</p>
     </div>
 
@@ -403,6 +402,26 @@ const FIRMA = {
   ]
 };
 
+// ---------- Ansprechpartner bei ppedv (feste Auswahl) ----------
+// Die Auswahl merkt sich jeder Browser – „Neu“ behält den eigenen Namen.
+const ANSPRECHPARTNER = [
+  { name: "Jasmin Meilner",    rolle: "Head of Sales",              tel: "+49 8677 9889-16",    email: "jasminm@ppedv.de" },
+  { name: "Katharina Karl",    rolle: "",                           tel: "+49 8677 9889-64",    email: "katharinak@ppedv.de" },
+  { name: "Mario Sefek",       rolle: "",                           tel: "+49 8677 9889-30",    email: "marios@ppedv.de" },
+  { name: "Steven Aigner",     rolle: "",                           tel: "+49 8677 9889-17",    email: "stevena@ppedv.de" },
+  { name: "Sophia Radspieler", rolle: "Customer Service Managerin", tel: "+49 (0)8677-988 917", email: "info@ppedv.de" }
+];
+const AP_KEY = "ppedv-angebot-ansprechpartner";
+function findeAnsprechpartner(name){
+  const n = String(name||"").replace(/^i\.\s?V\.?\s+/i,"").trim().toLowerCase();
+  const ap = ANSPRECHPARTNER.find(a=>a.name.toLowerCase()===n) || ANSPRECHPARTNER.find(a=>n && n.includes(a.name.split(" ").pop().toLowerCase()));
+  return ap ? Object.assign({}, ap) : null;
+}
+function gemerkterAnsprechpartner(){
+  let n=""; try{ n=localStorage.getItem(AP_KEY)||""; }catch(e){}
+  return findeAnsprechpartner(n) || Object.assign({}, ANSPRECHPARTNER[0]);
+}
+
 const PRESETS = {
   A: {
     angebot: { betreff: "Ihr Angebot: Inhouse-Workshop „KI-Abläufe, die funktionieren“" },
@@ -418,7 +437,7 @@ const PRESETS = {
       takeaways: "",
       zielgruppe: "Für Teamleiter, Entscheider und ihre Fachbereiche, die wiederkehrende Aufgaben einfacher und verlässlicher erledigen möchten. KI- oder IT-Vorkenntnisse sind nicht nötig.",
       hinweis: "Die Verantwortung bleibt beim Menschen: Ihr Team legt fest, wann geprüft, ergänzt oder freigegeben wird.",
-      link: ""
+      link: "https://ppedv.de/schulung/kurse/skill-building-workshop"
     },
     leistung: "Workshop-Pauschale „KI-Abläufe, die funktionieren“",
     positionen: ""
@@ -585,7 +604,7 @@ function blank(){
     matrix:null,
     rahmen:"", positionen:"",
     preis:{mwst:19,brutto:true,hinweis:""},
-    absender:{name:"Sophia Radspieler",rolle:"Customer Service Managerin",tel:"+49 (0)8677-988 917",email:"info@ppedv.de",iv:true}
+    absender:Object.assign({iv:true}, gemerkterAnsprechpartner())
   };
   applyKategorie(s,"inhouse");
   return s;
@@ -641,10 +660,10 @@ function angebotAusMatrix(d, alt){
   });
   // Ansprechpartner bei ppedv aus der Matrix (falls dort eingetragen); „i.V.“ im Namen wird erkannt
   const ab = d.absender||{}, abName = String(ab.name||"").trim();
+  // Nur feste Ansprechpartner: den Namen aus der Matrix in der Liste suchen, sonst bleibt der gewählte
   if(abName){
-    const iv = /^i\.\s?V\.?\s+/i.test(abName);
-    Object.assign(s.absender, { name: abName.replace(/^i\.\s?V\.?\s+/i,""), iv,
-      rolle: ab.rolle||"", tel: ab.tel||"+49 (0)8677-9889-0", email: ab.email||"info@ppedv.de" });
+    const iv = /^i\.\s?V\.?\s+/i.test(abName), ap = findeAnsprechpartner(abName);
+    if(ap) Object.assign(s.absender, ap, { iv });
   }
   s.matrix = { kurse: d.kurse, phasen: d.phasen||[], wochen: d.wochen||"", format: d.format||"inhouse",
     mitarbeitende: d.mitarbeitende||"", bestand: !!d.bestand, kartei: d.kartei||"" };
@@ -725,6 +744,7 @@ function hardwareText(s){
 function calc(s){
   const sch=s.schulung, r=s.reise, pos=[];
   let base=0;
+  const rabatte=[];   // Ersparnisse für „Ihre Investition“
   if(s.kategorie==="oeffentlich"){
     const {g,h}=tageKat1(sch), tp=num(sch.preis), hp=num(sch.preisHalb), bez="Schulung „"+(sch.kurs||"…")+"“";
     base=g*tp+h*hp;
@@ -737,8 +757,8 @@ function calc(s){
     base=num(sch.preis);
     const d=durchgaenge(sch.personen);
     pos.push({bez:PRESETS[s.preset].leistung, txt:"1 Tag, bis "+PREIS.maxPersonenInhouse+" Personen, inkl. Vorbereitung", menge:1, preis:base});
-    if(d>1) pos.push(weitereDurchgaenge(d-1, base));
-    if(rabattOk(s)) pos.push({bez:"Rabatt Bestandskunde (−20 %)", txt:"auf die Pauschale des ersten Durchgangs", menge:1, preis:-Math.round(base*PREIS.rabatt)});
+    if(d>1){ pos.push(weitereDurchgaenge(d-1, base)); rabatte.push({t:"weitere Durchgänge −20 %", b:(d-1)*(base-Math.round(base*(1-PREIS.wiederholRabatt)))}); }
+    if(rabattOk(s)){ pos.push({bez:"Rabatt Bestandskunde (−20 %)", txt:"auf die Pauschale des ersten Durchgangs", menge:1, preis:-Math.round(base*PREIS.rabatt)}); rabatte.push({t:"Bestandskunde −20 %", b:Math.round(base*PREIS.rabatt)}); }
   }
   let reise=0;
   if(s.kategorie==="kompetenz" && s.matrix && s.matrix.kurse.length){
@@ -746,7 +766,10 @@ function calc(s){
     const extra=s.matrix.kurse.reduce((x,c)=>x+durchgaenge(c.tn)-1,0);
     base=n*p;
     pos.push({bez:n+" "+(n==1?"Kurs":"Kurse")+" laut Kursplan", txt:"je Kurs pauschal "+eur(p)+" für bis zu 10 Teilnehmer"+(s.matrix.bestand?" · Bestandskundenpreis":""), menge:n, preis:p});
-    if(extra) pos.push(weitereDurchgaenge(extra, p));
+    // Ersparnis gegenüber Normalpreis: Bestandskundenpreis + weitere Durchgänge (−20 % vom Normalpreis)
+    const best = s.matrix.bestand && p<PREIS.kompetenzKurs, voll = best ? PREIS.kompetenzKurs : p, w=x=>Math.round(x*(1-PREIS.wiederholRabatt));
+    if(best) rabatte.push({t:"Bestandskundenpreis", b:n*(voll-p)+extra*(w(voll)-w(p))});
+    if(extra){ pos.push(weitereDurchgaenge(extra, p)); rabatte.push({t:"weitere Durchgänge −20 %", b:extra*(voll-w(voll))}); }
     // Reisekosten Trainer: Pauschale je Termin ODER km + Hotel ODER „nach Aufwand“ – immer als eigene Position
     if(v){
       const termine=v+" Vor-Ort-"+(v==1?"Termin":"Termine"), km=num(r.kmTermin), nae=uebernachtungen(s);
@@ -764,7 +787,7 @@ function calc(s){
   }
   parts(s.positionen).forEach(x=>pos.push({bez:x[0]||"",txt:x[1]||"",menge:num(x[2]||1),preis:num(x[3])}));
   const netto = pos.reduce((a,x)=>a+x.menge*x.preis,0);
-  return {pos, netto, base, reise};
+  return {pos, netto, base, reise, rabatte, ersparnis:rabatte.reduce((a,x)=>a+x.b,0)};
 }
 
 let S;
@@ -837,7 +860,7 @@ function autoDetails(s){
 function render(){
   autoDetails(S);
   const k=S.kunde, a=S.angebot, p=S.produkt, sch=S.schulung, kat=S.kategorie;
-  const {pos, netto, base, reise} = calc(S);
+  const {pos, netto, base, reise, rabatte, ersparnis} = calc(S);
   const mw = netto*(num(S.preis.mwst)/100);
   const nr = angebotsNr(S);
   const nrOut = nr ? esc(nr) : '<span class="missing">bitte eintragen</span>';
@@ -852,7 +875,7 @@ function render(){
   // Kategorie 1: Titel, Betreff, Eckdaten und Link ergeben sich aus dem gewählten Kurs
   const titel = p.titel || (kat==="oeffentlich" ? (sch.kurs||"Schulung") : "");
   const betreff = a.betreff || (kat==="oeffentlich" ? "Ihr Angebot: Schulung „"+(sch.kurs||"…")+"“" : "");
-  const link = p.link || (kat==="oeffentlich" && kurs ? kurs.url : "");
+  const link = p.link || (kat==="oeffentlich" && kurs ? kurs.url : kat==="inhouse" && PRESETS[S.preset] ? PRESETS[S.preset].produkt.link : "");
   // Kategorie 3 mit Daten aus der Kompetenzmatrix
   const mx = kat==="kompetenz" && S.matrix && S.matrix.kurse.length ? S.matrix : null;
   const mxN = mx ? mx.kurse.length : 0, mxV = vorOrtTermine(S);
@@ -933,8 +956,8 @@ function render(){
     </div>`:""}
 
     <div class="price-teaser">
-      <div class="l"><b>Ihre Investition</b>${esc(teaser)}${reise?" · inkl. Reisekosten":""}</div>
-      <div class="r"><b>${eur(netto)}</b><span>netto, zzgl. ${esc(S.preis.mwst)} % USt.</span></div>
+      <div class="l"><b>Ihre Investition</b>${esc(teaser)}${reise?" · inkl. Reisekosten":""}${ersparnis?`<em class="spar">Sie sparen ${eur(ersparnis)} (${esc(rabatte.map(x=>x.t).join(", "))})</em>`:""}</div>
+      <div class="r">${ersparnis?`<s>${eur(netto+ersparnis)}</s>`:""}<b>${eur(netto)}</b><span>netto, zzgl. ${esc(S.preis.mwst)} % USt.</span></div>
     </div>
     <div class="flow"><div class="flow-t">So geht es weiter</div>
       <div><i>1</i><span><b>Angebot bestätigen</b>eine kurze E-Mail genügt</span></div>
@@ -1044,6 +1067,8 @@ function syncForm(base, reise, netto, pers, maxP){
   phi.textContent = num(sch.preis)===num(std) ? "" : "Preis angepasst (Standard: "+eur(num(std))+").";
   phi.className = "hint need";
 
+  const abs=document.getElementById("abSelect"), apAkt=findeAnsprechpartner(S.absender.name);
+  if(apAkt && abs.value!==apAkt.name) abs.value=apAkt.name;
   const mi=document.getElementById("mxInfo"), mxd=S.matrix;
   mi.innerHTML = mxd && mxd.kurse.length
     ? "✓ "+mxd.kurse.length+" "+(mxd.kurse.length==1?"Kurs":"Kurse")+" übernommen · "+esc(MATRIX_FORMATE[mxd.format]||"")+(mxd.bestand?" · Bestandskunde":"")+(mxd.kartei?` · <a href="${esc(mxd.kartei)}" target="_blank" rel="noopener">Kartei öffnen</a>`:"")
@@ -1096,6 +1121,14 @@ document.getElementById("form").addEventListener("input", e=>{
 });
 document.querySelectorAll("[data-preset]").forEach(b=>b.addEventListener("click",()=>{ applyPreset(S,b.dataset.preset); fillForm(); render(); }));
 document.querySelectorAll("[data-fmt]").forEach(b=>b.addEventListener("click",()=>{ S.schulung.format=b.dataset.fmt; S.schulung.preis=defaultPreis(S); fillForm(); render(); }));
+const abSelect = document.getElementById("abSelect");
+abSelect.innerHTML = ANSPRECHPARTNER.map(a=>`<option value="${esc(a.name)}">${esc([a.name, a.rolle].filter(Boolean).join(" · "))}</option>`).join("");
+abSelect.onchange = ()=>{
+  const ap = findeAnsprechpartner(abSelect.value); if(!ap) return;
+  Object.assign(S.absender, ap);
+  try{ localStorage.setItem(AP_KEY, ap.name); }catch(e){}
+  render();
+};
 document.getElementById("mxGo").onclick = ()=>{
   const inp=document.getElementById("mxLink");
   try{
