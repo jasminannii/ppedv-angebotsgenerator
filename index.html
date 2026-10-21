@@ -212,6 +212,9 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
 /* ---------- Print ---------- */
 @page{size:A4;margin:0}
 @media print{
+  /* Nur das Angebot drucken: Browser-Erweiterungen (z. B. Apollo) hängen eigene Elemente
+     an <html>/<body> an – die fallen im PDF weg */
+  html > :not(head):not(body), body > :not(.app), .app > :not(.stage), .stage > :not(.pages), .pages > :not(.page){display:none!important}
   html,body{background:#fff}
   .app{display:block;height:auto}
   .side,.toolbar,.warn{display:none!important}
@@ -1027,6 +1030,7 @@ function render(){
         <p>Mit freundlichen Grüßen</p>
         <div class="name">${S.absender.iv?'<span style="font-weight:400;color:var(--muted)">i.V. </span>':""}${esc(S.absender.name)}</div>
         <div class="role">${esc([S.absender.rolle, FIRMA.name].filter(Boolean).join(" · "))}</div>
+        <div class="role">${esc([S.absender.tel?"Tel. "+S.absender.tel:"", S.absender.email].filter(Boolean).join(" · "))}</div>
       </div>
     </div>`;
 
