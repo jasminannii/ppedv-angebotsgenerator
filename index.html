@@ -882,6 +882,9 @@ function render(){
   const k=S.kunde, a=S.angebot, p=S.produkt, sch=S.schulung, kat=S.kategorie;
   const {pos, netto, base, reise, rabatte, ersparnis} = calc(S);
   const mw = netto*(num(S.preis.mwst)/100);
+  // Kunden außerhalb Deutschlands: keine 19 % ausweisen, nur „zzgl. gesetzlicher Umsatzsteuer“ (Steuer klärt die Rechnung)
+  const ausland = !!auslandText(k);
+  const ustText = ausland ? "netto, zzgl. gesetzlicher Umsatzsteuer" : "netto, zzgl. "+S.preis.mwst+" % USt.";
   const nr = angebotsNr(S);
   const nrOut = nr ? esc(nr) : '<span class="missing">bitte eintragen</span>';
   const person = [k.anrede==="Frau"?"Frau":k.anrede==="Herr"?"Herrn":"", k.vorname, k.nachname].filter(Boolean).join(" ");
@@ -979,7 +982,7 @@ function render(){
 
     <div class="price-teaser">
       <div class="l"><b>Ihre Investition</b>${esc(teaser)}${reise?" · inkl. Reisekosten":""}${ersparnis?`<em class="spar">Sie sparen ${eur(ersparnis)} (${esc(rabatte.map(x=>x.t).join(", "))})</em>`:""}</div>
-      <div class="r">${ersparnis?`<s>${eur(netto+ersparnis)}</s>`:""}<b>${eur(netto)}</b><span>netto, zzgl. ${esc(S.preis.mwst)} % USt.</span></div>
+      <div class="r">${ersparnis?`<s>${eur(netto+ersparnis)}</s>`:""}<b>${eur(netto)}</b><span>${esc(ustText)}</span></div>
     </div>
     <div class="flow"><div class="flow-t">So geht es weiter</div>
       <div><i>1</i><span><b>Angebot bestätigen</b>eine kurze E-Mail genügt</span></div>
@@ -1014,11 +1017,12 @@ function render(){
         <table class="price">
           <tr><th>Leistung</th><th class="num">Betrag</th></tr>
           ${pos.map(r=>`<tr><td>${esc(r.bez)}${r.txt?`<small>${esc(r.txt)}</small>`:""}</td><td class="num">${r.betrag?esc(r.betrag):r.preis===0?"inklusive":eur(r.menge*r.preis)}</td></tr>`).join("")}
-          ${S.preis.brutto?`
+          ${S.preis.brutto && !ausland?`
           <tr class="sum"><td>Summe netto</td><td class="num">${eur(netto)}</td></tr>
           <tr class="sum"><td>zzgl. ${esc(S.preis.mwst)} % USt.</td><td class="num">${eur(mw)}</td></tr>
           <tr class="total"><td>Gesamtbetrag</td><td class="num">${eur(netto+mw)}</td></tr>`
-          :`<tr class="total"><td>Gesamt netto</td><td class="num">${eur(netto)}</td></tr>`}
+          :`<tr class="total"><td>Gesamt netto</td><td class="num">${eur(netto)}</td></tr>
+          ${ausland?`<tr class="sum"><td colspan="2">zzgl. gesetzlicher Umsatzsteuer</td></tr>`:""}`}
         </table>
         ${pHinweis?`<div class="pnote">${esc(pHinweis)}</div>`:""}
       </div>
@@ -1117,7 +1121,7 @@ function syncForm(base, reise, netto, pers, maxP){
   const {pos} = calc(S), mw = netto*(num(S.preis.mwst)/100);
   document.getElementById("sidesum").innerHTML =
     pos.filter(x=>x.preis).map(x=>`<div class="ln"><span>${esc(x.bez)}</span><span>${eur(x.menge*x.preis)}</span></div>`).join("") +
-    `<div class="tot"><span>Netto <b>${eur(netto)}</b></span><small>Brutto ${eur(netto+mw)}</small></div>`;
+    `<div class="tot"><span>Netto <b>${eur(netto)}</b></span><small>${auslandText(S.kunde)?"zzgl. gesetzl. USt.":"Brutto "+eur(netto+mw)}</small></div>`;
 }
 
 // Die Angebotsnummer ist immer die Ansprechpartner-ID aus Nina (z. B. 86919); Feldname kundennr aus Kompatibilität
