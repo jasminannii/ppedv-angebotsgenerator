@@ -37,6 +37,7 @@ Antwort (JSON), nur die Felder, die ins Angebot gehören:
   "strasse": "Musterstraße 1",
   "plz": "12345",
   "ort": "Musterstadt",
+  "land": "Deutschland",
   "betreuer": { "name": "Jasmin Meilner", "funktion": "Head of Sales",
                 "telefon": "+49 8677 9889-16", "email": "jasminm@ppedv.de" }
 }

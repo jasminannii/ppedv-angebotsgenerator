@@ -279,6 +279,8 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
         </div>
         <label>Straße</label><input data-k="kunde.strasse">
         <div class="row"><div><label>PLZ</label><input data-k="kunde.plz"></div><div><label>Ort</label><input data-k="kunde.ort"></div></div>
+        <label>Land</label><input data-k="kunde.land" list="laender" autocomplete="off">
+        <datalist id="laender"><option>Deutschland</option><option>Österreich</option><option>Schweiz</option><option>Liechtenstein</option><option>Luxemburg</option><option>Niederlande</option><option>Belgien</option><option>Italien</option><option>Frankreich</option></datalist>
         <label>E-Mail</label><input data-k="kunde.email">
       </details>
 
@@ -601,7 +603,7 @@ function today(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMon
 
 function blank(){
   const s = {
-    kunde:{firma:"",anrede:"Frau",vorname:"",nachname:"",strasse:"",plz:"",ort:"",kundennr:"",email:""},
+    kunde:{firma:"",anrede:"Frau",vorname:"",nachname:"",strasse:"",plz:"",ort:"",land:"Deutschland",kundennr:"",email:""},
     angebot:{nr:"",datum:today(),gueltig:14,betreff:"",datei:"",brief:BRIEF_WORKSHOP},
     produkt:{},
     schulung:{kurs:"",tage:1,halbeTage:0,personen:10,format:"online",standort:"Burghausen",rabatt:"",vorbereitung:false,preisHalb:1390},
@@ -820,6 +822,8 @@ function num(v){ if(typeof v==="number") return isNaN(v)?0:v; const n=parseFloat
 function dfmt(iso){ if(!iso) return ""; const [y,m,d]=iso.split("-"); return d+"."+m+"."+y; }
 function addDays(iso,n){ const d=new Date(iso+"T12:00:00"); d.setDate(d.getDate()+(+n||0)); return d.toISOString().slice(0,10); }
 
+// Land in der Anschrift: bei Deutschland weglassen, sonst in Großbuchstaben (DIN 5008)
+function auslandText(k){ const l=String(k.land||"").trim(); return !l || /^(deutschland|germany|de)$/i.test(l) ? "" : l.toUpperCase(); }
 function anrede(k){
   if(k.anrede==="Frau" && k.nachname) return "Sehr geehrte Frau "+k.nachname+",";
   if(k.anrede==="Herr" && k.nachname) return "Sehr geehrter Herr "+k.nachname+",";
@@ -943,7 +947,7 @@ function render(){
     <div class="addr">
       <div>
         <div class="ret">${esc(FIRMA.name)} · ${esc(FIRMA.strasse)} · ${esc(FIRMA.ort)}</div>
-        <div class="to"><b>${esc(k.firma)}</b><br>${person?"z. Hd. "+esc(person)+"<br>":""}${esc(k.strasse)}<br>${esc([k.plz,k.ort].filter(Boolean).join(" "))}</div>
+        <div class="to"><b>${esc(k.firma)}</b><br>${person?"z. Hd. "+esc(person)+"<br>":""}${esc(k.strasse)}<br>${esc([k.plz,k.ort].filter(Boolean).join(" "))}${auslandText(k)?"<br>"+esc(auslandText(k)):""}</div>
       </div>
       <div class="meta">
         <div><span>Angebots-Nr.</span><b>${nrOut}</b></div>
