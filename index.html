@@ -329,6 +329,7 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
             <div class="inrow"><input id="mxLink" placeholder="Link einfügen …" autocomplete="off"><button type="button" class="btn2" id="mxGo">Übernehmen</button></div>
             <p class="hint" id="mxInfo"></p>
           </div>
+          <label class="check"><input type="checkbox" id="mxBestand"> Bestandskunde (2.800 € statt 3.500 € je Kurs)</label>
           <label>Preis je Kurs (€ netto)</label><input type="number" min="0" step="50" data-k="schulung.preis">
           <label class="check aufpreisOpt" data-cat="kompetenz"><input type="checkbox" data-k="schulung.aufpreis"> Ausnahme: bei 1–2 Personen über 10 Aufpreis (250 € je Person und Tag) statt weiterem Durchgang</label>
           <div class="box">
@@ -1095,7 +1096,8 @@ function syncForm(base, reise, netto, pers, maxP){
   const mi=document.getElementById("mxInfo"), mxd=S.matrix;
   mi.innerHTML = mxd && mxd.kurse.length
     ? "✓ "+mxd.kurse.length+" "+(mxd.kurse.length==1?"Kurs":"Kurse")+" übernommen · "+esc(MATRIX_FORMATE[mxd.format]||"")+(mxd.bestand?" · Bestandskunde":"")+(mxd.kartei?` · <a href="${esc(mxd.kartei)}" target="_blank" rel="noopener">Kartei öffnen</a>`:"")
-    : "Normalerweise nicht nötig: In der Matrix unter Abschluss auf „Angebot erstellen“ klicken – der Generator öffnet sich fertig ausgefüllt. Der Link liegt dann auch in der Zwischenablage (Strg+V).";
+    : "In der Matrix unter Abschluss auf „Link für Angebotsgenerator“ klicken – der Generator öffnet sich fertig ausgefüllt. Der Link liegt dann auch in der Zwischenablage (Strg+V).";
+  const mb=document.getElementById("mxBestand"); mb.checked=!!(mxd&&mxd.bestand); mb.disabled=!mxd;
   mi.className = "hint"+(mxd && mxd.kurse.length ? " ok" : "");
   const rh2=document.getElementById("mxReiseHint"), vt=vorOrtTermine(S);
   rh2.textContent = mxd && vt ? vt+" Vor-Ort-"+(vt==1?"Termin":"Termine")+", "+uebernachtungen(S)+" Übernachtungen"+(num(S.reise.proTermin)?" – es gilt die Pauschale":num(S.reise.kmTermin)?"":" – ohne Kilometer steht „nach Aufwand“ im Angebot") : "";
@@ -1159,6 +1161,10 @@ document.getElementById("mxGo").onclick = ()=>{
     if(S.kunde.firma && !confirm("Neues Angebot aus der Kompetenzmatrix erstellen?\nDie aktuellen Eingaben werden ersetzt.")) return;
     S=angebotAusMatrix(d,S); inp.value=""; fillForm(); render();
   }catch(err){ alert("Link konnte nicht gelesen werden: "+err.message); }
+};
+document.getElementById("mxBestand").onchange = e=>{
+  if(!S.matrix) return;
+  S.matrix.bestand = e.target.checked; S.schulung.preis = defaultPreis(S); fillForm(); render();
 };
 document.querySelectorAll("[data-kat]").forEach(b=>b.addEventListener("click",()=>{ applyKategorie(S,b.dataset.kat); fillForm(); render(); }));
 document.getElementById("kursliste").innerHTML = KURSE.map(k=>`<option value="${esc(k.name)}">${tageText(k.tage)}</option>`).join("");

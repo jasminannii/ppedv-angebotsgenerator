@@ -5,8 +5,9 @@
 ## Ziel
 
 Im Angebotsgenerator (https://ppedv-angebotsgenerator.vercel.app) gibt der Vertrieb die
-**Kundennummer** ein. Kundendaten, Ansprechpartner und der zuständige Betreuer sollen dann
-automatisch aus Nina übernommen werden – kein Abtippen, keine veralteten Adressen.
+**Ansprechpartner-ID aus Nina** ein (die Nummer aus `…/adressen/ansprechpartneredit/{id}`,
+z. B. 86919). Ansprechpartner, Firma mit Adresse, **Kundennummer** (= Angebotsnummer) und der
+zuständige Betreuer sollen dann automatisch übernommen werden – kein Abtippen, keine veralteten Adressen.
 
 Die Daten gehen **direkt von Nina in den Browser** der angemeldeten Mitarbeiterin.
 Der Angebotsgenerator hat keinen eigenen Server und speichert nichts zentral.
@@ -22,32 +23,31 @@ Der Angebotsgenerator hat keinen eigenen Server und speichert nichts zentral.
 ### 1. Eine lesende Abfrage (GET)
 
 ```
-GET https://nina.ppedv.de/ppcompany/api/angebot/kunde/{kundennummer}
+GET https://nina.ppedv.de/ppcompany/api/angebot/ansprechpartner/{ansprechpartnerId}
 ```
 
 Antwort (JSON), nur die Felder, die ins Angebot gehören:
 
 ```json
 {
-  "kundennummer": "86919",
+  "ansprechpartner": { "id": 86919, "anrede": "Frau", "titel": "", "vorname": "Erika",
+                       "nachname": "Muster", "email": "e.muster@beispiel.de", "telefon": "+49 …" },
+  "kundennummer": "140678156",
   "firma": "Beispiel GmbH",
   "strasse": "Musterstraße 1",
   "plz": "12345",
   "ort": "Musterstadt",
-  "ansprechpartner": [
-    { "id": 4711, "anrede": "Frau", "titel": "", "vorname": "Erika", "nachname": "Muster",
-      "email": "e.muster@beispiel.de", "telefon": "+49 …", "haupt": true }
-  ],
   "betreuer": { "name": "Jasmin Meilner", "funktion": "Head of Sales",
                 "telefon": "+49 8677 9889-16", "email": "jasminm@ppedv.de" }
 }
 ```
 
-- `ansprechpartner`: alle Ansprechpartner der Firma, `haupt: true` beim Hauptansprechpartner
-  (im Generator wird dann ausgewählt, wer im Angebot steht).
+- `ansprechpartner`: die Person mit dieser ID – sie wird im Angebot angeschrieben.
+- `kundennummer`, `firma`, Adresse: von der Firma, zu der der Ansprechpartner gehört.
+  Die Kundennummer ist bei uns zugleich die Angebotsnummer (Dateiname `ANG-<Kundennummer>_<Firma>`).
 - `betreuer`: der **Besitzer** des Kunden in Nina – wird im Angebot „Ihr Kontakt bei ppedv“.
-- Hilfreich, falls einfach: dieselbe Antwort auch über die Ansprechpartner-ID
-  (`GET …/api/angebot/ansprechpartner/{id}`), so wie in `…/adressen/ansprechpartneredit/{id}`.
+- Optional, falls einfach: dieselbe Antwort über die Kundennummer
+  (`GET …/api/angebot/kunde/{kundennummer}`, dann mit allen Ansprechpartnern als Liste).
 
 Fehlerfälle: `404` = unbekannte Nummer, `401/403` = nicht angemeldet bzw. keine Berechtigung.
 
