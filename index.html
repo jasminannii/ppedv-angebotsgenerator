@@ -409,7 +409,6 @@ const ANSPRECHPARTNER = [
   { name: "Katharina Karl",    rolle: "Projektleitung",                           tel: "+49 8677 9889-64",    email: "katharinak@ppedv.de" },
   { name: "Mario Sefek",       rolle: "Projektleitung",                           tel: "+49 8677 9889-30",    email: "marios@ppedv.de" },
   { name: "Steven Aigner",     rolle: "Projektleitung",                           tel: "+49 8677 9889-17",    email: "stevena@ppedv.de" },
-  { name: "Sophia Radspieler", rolle: "Customer Service Managerin", tel: "+49 (0)8677-988 917", email: "info@ppedv.de" }
 ];
 const AP_KEY = "ppedv-angebot-ansprechpartner";
 function findeAnsprechpartner(name){
@@ -1166,6 +1165,8 @@ function hydrate(obj){
   applyKategorie(s, obj && KATEGORIEN[obj.kategorie] ? obj.kategorie : "inhouse");
   merge(s, obj||{});
   if(!obj || !obj.schulung || obj.schulung.preis==null) s.schulung.preis = defaultPreis(s);
+  // Absender nicht (mehr) in der Liste → eigenen gemerkten Ansprechpartner einsetzen
+  if(!findeAnsprechpartner(s.absender.name)) s.absender = Object.assign({iv:s.absender.iv!==false}, gemerkterAnsprechpartner());
   return s;
 }
 function merge(base,over){
