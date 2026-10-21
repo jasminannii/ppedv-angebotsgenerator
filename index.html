@@ -185,6 +185,7 @@ table.plan td:first-child{color:var(--orange);font-weight:700;width:5mm}
 table.plan td:nth-child(2){color:var(--navy);font-weight:600}
 table.plan td em{font-style:normal;font-weight:400;font-size:6.8pt;color:var(--orange)}
 table.plan td small{color:var(--muted)}
+table.plan .agl{font-weight:400;color:var(--muted);font-size:6.9pt;line-height:1.35;margin-top:.4mm}
 table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
 
 .note{margin-top:3.5mm;background:var(--orange-soft);border-radius:2.5mm;padding:2.4mm 4mm;font-size:8.3pt}
@@ -318,9 +319,13 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
             <div class="inrow"><input id="mxLink" placeholder="Link einfügen …" autocomplete="off"><button type="button" class="btn2" id="mxGo">Übernehmen</button></div>
             <p class="hint" id="mxInfo"></p>
           </div>
-          <div class="row">
-            <div><label>Preis je Kurs (€ netto)</label><input type="number" min="0" step="50" data-k="schulung.preis"></div>
-            <div><label>Anreise je Vor-Ort-Termin (€)</label><input type="number" min="0" step="50" data-k="reise.proTermin" placeholder="nach Aufwand"></div>
+          <label>Preis je Kurs (€ netto)</label><input type="number" min="0" step="50" data-k="schulung.preis">
+          <div class="box">
+            <div class="sub" style="margin:0;padding:0;border:0">Reisekosten Trainer <small style="font-weight:400;color:var(--ui-muted)">· 1:1 nach Aufwand</small></div>
+            <div class="row"><div><label>Kilometer je Termin <small>(hin + zurück)</small></label><input type="number" min="0" data-k="reise.kmTermin" placeholder="z. B. 1200"></div><div><label>€ pro km</label><input type="number" min="0" step="0.01" data-k="reise.kmSatz"></div></div>
+            <div class="row"><div><label>Hotel € / Nacht <small>(ca.)</small></label><input type="number" min="0" data-k="reise.hotel"></div><div><label>oder Pauschale je Termin (€)</label><input type="number" min="0" step="50" data-k="reise.proTermin" placeholder="—"></div></div>
+            <label class="check"><input type="checkbox" data-k="reise.vorabend"> Anreise am Vortag (1 Nacht je Kurstag, sonst Kurstage − 1)</label>
+            <p class="hint" id="mxReiseHint"></p>
           </div>
         </div>
         <div class="box">
@@ -576,7 +581,7 @@ function blank(){
     produkt:{},
     schulung:{kurs:"",tage:1,halbeTage:0,personen:10,format:"online",standort:"Burghausen",rabatt:"",vorbereitung:false,preisHalb:1390},
     details:{technik:"",vorkenntnisse:"",voraussetzungen:"",unterlagen:"Präsentationen und Labs"},
-    reise:{km:0,naechte:0,kmSatz:0.6,hotel:90,proTermin:""},
+    reise:{km:0,naechte:0,kmSatz:0.6,hotel:90,proTermin:"",kmTermin:"",vorabend:true},
     matrix:null,
     rahmen:"", positionen:"",
     preis:{mwst:19,brutto:true,hinweis:""},
@@ -652,6 +657,14 @@ function angebotAusMatrix(d, alt){
 }
 // ppedv gendert nicht: Texte aus der Matrix für das Angebot angleichen
 function ungendern(t){ return String(t).replace(/Teilnehmende(n?)/g,"Teilnehmer").replace(/Mitarbeitende(n?)/g,"Mitarbeiter"); }
+// Kurstage aus der Dauer („2 Tage“, „1 Tag“, „90 Min.“ → 1)
+function kurstage(t){ const m=String(t||"").match(/(\d+)\s*Tag/); return m ? Math.max(1,+m[1]) : 1; }
+// Übernachtungen des Trainers: Anreise am Vortag = eine Nacht je Kurstag, sonst Kurstage − 1
+function uebernachtungen(s){
+  if(!s.matrix) return 0;
+  const vortag = s.reise.vorabend!==false;
+  return s.matrix.kurse.filter(c=>c.ort!=="online").reduce((x,c)=>x+durchgaenge(c.tn)*(vortag?kurstage(c.t):kurstage(c.t)-1),0);
+}
 // jeder Durchgang vor Ort ist ein eigener Termin mit Anreise
 function vorOrtTermine(s){ return s.matrix ? s.matrix.kurse.filter(c=>c.ort!=="online").reduce((x,c)=>x+durchgaenge(c.tn),0) : 0; }
 function applyPreset(s,key){
@@ -698,6 +711,17 @@ function zeitenText(s){
   if(s.kategorie==="kompetenz") return ZEIT_GANZ+" bzw. "+ZEIT_HALB;
   return ZEIT_GANZ;
 }
+// Hardwarebereitstellung wie in der ppedv-Angebotsvorlage
+const HW_ONLINE = "online: eigener PC mit Browser bzw. Microsoft Teams, stabiles Internet, 2 Bildschirme, Headset (kostenloser Technik-Check vorab)";
+const HW_VORORT = "vor Ort: Schulungsraum mit Beamer oder großem Bildschirm, je Teilnehmer ein PC oder Notebook mit Internetzugang";
+const HW_STANDORT = "Schulungsrechner im ppedv-Trainingscenter";
+function hardwareText(s){
+  let online=false, vorOrt=false, standort=false;
+  if(s.kategorie==="kompetenz"){ const k=(s.matrix&&s.matrix.kurse)||[]; online=k.some(c=>c.ort==="online"); vorOrt=k.some(c=>c.ort!=="online") || !k.length; }
+  else { const f=s.schulung.format; online=f==="online"; standort=f==="standort"; vorOrt=f==="kunde"; }
+  const t=[online?HW_ONLINE:"", vorOrt?HW_VORORT:"", standort?HW_STANDORT:""].filter(Boolean);
+  return t.length==1 ? t[0].replace(/^(online|vor Ort): /,"") : t.join("; ");
+}
 function calc(s){
   const sch=s.schulung, r=s.reise, pos=[];
   let base=0;
@@ -723,7 +747,14 @@ function calc(s){
     base=n*p;
     pos.push({bez:n+" "+(n==1?"Kurs":"Kurse")+" laut Kursplan", txt:"je Kurs pauschal "+eur(p)+" für bis zu 10 Teilnehmer"+(s.matrix.bestand?" · Bestandskundenpreis":""), menge:n, preis:p});
     if(extra) pos.push(weitereDurchgaenge(extra, p));
-    if(v && a){ reise=v*a; pos.push({bez:"Reisekosten", txt:v+" Vor-Ort-"+(v==1?"Termin":"Termine")+" × "+eur(a), menge:v, preis:a}); }
+    // Reisekosten Trainer: Pauschale je Termin ODER km + Hotel ODER „nach Aufwand“ – immer als eigene Position
+    if(v){
+      const termine=v+" Vor-Ort-"+(v==1?"Termin":"Termine"), km=num(r.kmTermin), nae=uebernachtungen(s);
+      if(a){ reise=v*a; pos.push({bez:"Reisekosten Trainer (Pauschale)", txt:termine+" × "+eur(a), menge:v, preis:a}); }
+      else if(km){ reise=v*km*num(r.kmSatz)+nae*num(r.hotel);
+        pos.push({bez:"Reisekosten Trainer (1:1 nach Aufwand)", txt:termine+" × "+km.toLocaleString("de-DE")+" km × "+eur(num(r.kmSatz))+" + "+nae+" "+(nae==1?"Übernachtung":"Übernachtungen")+" × ca. "+eur(num(r.hotel)), menge:1, preis:reise}); }
+      else pos.push({bez:"Reisekosten Trainer", txt:termine+" · "+eur(num(r.kmSatz))+" je km, Hotel ca. "+eur(num(r.hotel))+" je Nacht · Abrechnung 1:1", menge:1, preis:0, betrag:"nach Aufwand"});
+    }
   }
   if(reiseAktiv(s)){
     const km=num(r.km), n=num(r.naechte), t=[];
@@ -793,8 +824,6 @@ function detailVorschlag(s){
   if(technik.includes("Microsoft 365 Copilot")) vor.push("Microsoft 365 Copilot-Lizenzen und Tenant-Zugang");
   if(technik.some(t=>/Power Automate|Power Apps|Power Platform|Copilot Studio/.test(t))) vor.push("Zugang zur Power Platform");
   if(kurse.some(n=>/Administration|Admin/.test(n))) vor.push("Test- bzw. Admin-Zugang nach Absprache");
-  if(vorOrt) vor.push("Raum mit Beamer und WLAN, Laptops für die Teilnehmer");
-  if(online) vor.push("PC mit Internet, Headset und Browser");
   return {technik:technik.join(", "), vorkenntnisse, voraussetzungen:vor.join("; ")};
 }
 // Übernimmt den Vorschlag in alle Felder, die nicht selbst bearbeitet wurden
@@ -834,26 +863,35 @@ function render(){
     : mx ? mxN+" "+(mxN==1?"Kurs":"Kurse")+" × "+eur(num(sch.preis))+" · Zeitraum nach Vereinbarung"
     : chips.slice(0,2).join(" · ");
   const auto = (kat==="kompetenz"
-    ? (mx ? [["Zeitraum", "nach Vereinbarung"], ["Kurse", mxN+(mxV&&mxV<mxN?" (davon "+mxV+" vor Ort)":"")], ["Format", MATRIX_FORMATE[mx.format]||""]].concat(mx.mitarbeitende?[["Mitarbeiter", String(mx.mitarbeitende)]]:[]) : [])
+    ? (mx ? [["Zeitraum", "nach Vereinbarung"], ["Kurse", mxN+(mxV&&mxV<mxN?" (davon "+mxV+" vor Ort)":"")], ["Format", (MATRIX_FORMATE[mx.format]||"")+(mx.format!=="online"&&k.ort?" · bei Ihnen in "+k.ort:"")]].concat(mx.mitarbeitende?[["Mitarbeiter", String(mx.mitarbeitende)]]:[]) : [])
     : [["Dauer", kat==="oeffentlich"?dauer:dg>1?"1 Tag je Durchgang":"1 Tag"], ["Teilnehmer", persText], ["Format", formatText(S).replace(/^[ob]/,c=>c.toUpperCase())]])
-    .concat([["Schulungszeiten", zeitenText(S)]]);
+    .concat([["Schulungszeiten", zeitenText(S)], ["Hardware", hardwareText(S)]]);
   const dt = S.details||{};
   const details = [["Technologien",dt.technik],["Vorkenntnisse",dt.vorkenntnisse],["Voraussetzungen",dt.voraussetzungen],["Unterlagen",dt.unterlagen]].filter(r=>String(r[1]||"").trim());
   const rahmen = auto.concat(details, parts(S.rahmen));
   const nutzen = parts(p.nutzen), steps = parts(p.steps);
-  const reiseHinweis = reiseAktiv(S) && !reise ? "Zzgl. Reisekosten des Trainers, 1:1 nach Aufwand."
-    : mx && mxV && !reise ? "Zzgl. Anreise für "+mxV+" Vor-Ort-"+(mxV==1?"Termin":"Termine")+" (nach Aufwand)." : "";
-  const kursplan = mx ? `
-    <div class="kicker">Ihr Kursplan</div>
-    <h3 class="sec" style="margin-bottom:2.5mm">${mxN} ${mxN==1?"Kurs":"Kurse"} nach Priorität</h3>
+  const reiseHinweis = reiseAktiv(S) && !reise ? "Zzgl. Reisekosten des Trainers, 1:1 nach Aufwand." : "";
+  // Optionale Zusatzleistungen aus der ppedv-Angebotsvorlage
+  const zusatz = "Optional zuzüglich: virtuelle Maschinen 29 € je Person und Tag (bei Bedarf)"+(kat==="oeffentlich"&&sch.vorbereitung?"":"; Trainer-Vorbereitung bei größeren inhaltlichen Anpassungen nach Aufwand")+".";
+  // Kursplan mit Agenda je Kurs – bei vielen Kursen über mehrere Seiten
+  const mitAgenda = mx && mx.kurse.some(c=>c.ag && c.ag.length);
+  const proSeite = mitAgenda ? 12 : 18;
+  const kursZeile = (c,i)=>`<tr><td>${i+1}</td><td>${esc(c.n)}${c.pflicht?" <em>immer dabei</em>":""}${mitAgenda?`<div class="agl">${esc(c.ag&&c.ag.length?c.ag.join(" · "):"Inhalte laut Kursbeschreibung auf ppedv.de")}</div>`:""}</td><td>${esc(c.t||"")}</td><td>${esc(c.ort||"")}</td><td>${esc(c.team||"")}${c.tn?` <small>(${esc(c.tn)}${durchgaenge(c.tn)>1?" · "+durchgaenge(c.tn)+" Durchgänge":""})</small>`:""}</td></tr>`;
+  const planTeile = [];
+  if(mx) for(let i=0;i<mxN;i+=proSeite) planTeile.push(`
+    <div class="kicker">Ihr Kursplan${i?" (Fortsetzung)":""}</div>
+    <h3 class="sec" style="margin-bottom:2.5mm">${i?"Kurse "+(i+1)+"–"+Math.min(mxN,i+proSeite):mxN+" "+(mxN==1?"Kurs":"Kurse")+" nach Priorität"}</h3>
     <table class="plan">
-      <tr><th>#</th><th>Kurs</th><th>Dauer</th><th>Ort</th><th>Team</th></tr>
-      ${mx.kurse.map((c,i)=>`<tr><td>${i+1}</td><td>${esc(c.n)}${c.pflicht?" <em>immer dabei</em>":""}</td><td>${esc(c.t||"")}</td><td>${esc(c.ort||"")}</td><td>${esc(c.team||"")}${c.tn?` <small>(${esc(c.tn)}${durchgaenge(c.tn)>1?" · "+durchgaenge(c.tn)+" Durchgänge":""})</small>`:""}</td></tr>`).join("")}
-    </table>` : "";
+      <tr><th>#</th><th>Kurs und Inhalte</th><th>Dauer</th><th>Ort</th><th>Team</th></tr>
+      ${mx.kurse.slice(i,i+proSeite).map((c,j)=>kursZeile(c,i+j)).join("")}
+    </table>`);
+  // Ablauf passt mit auf die letzte Kursplan-Seite, wenn dort wenig steht
+  const restLetzte = mx ? mxN-(planTeile.length-1)*proSeite : 0;
+  const ablaufBeiPlan = mx && restLetzte <= proSeite/2;
   const ablaufKicker = kat==="kompetenz" ? "Projektablauf" : "Der Workshop-Tag";
   const ablaufTitel = kat==="kompetenz" ? "In vier Phasen vom Plan in den Alltag" : "So entsteht Ihr verlässlicher Ablauf";
-  const total = mx ? 3 : 2;   // Kategorie 3 mit Kursplan: eigene Seite für Kursplan und Ablauf
-  const pHinweis = [reiseHinweis, S.preis.hinweis].filter(Boolean).join(" ");
+  const total = 1 + (mx ? planTeile.length + 1 : 1);
+  const pHinweis = [reiseHinweis, S.preis.hinweis, zusatz].filter(Boolean).join(" ");
 
   const page1 = `
   <section class="page"><div class="topbar"></div><div class="inner">
@@ -930,7 +968,7 @@ function render(){
       <div>
         <table class="price">
           <tr><th>Leistung</th><th class="num">Betrag</th></tr>
-          ${pos.map(r=>`<tr><td>${esc(r.bez)}${r.txt?`<small>${esc(r.txt)}</small>`:""}</td><td class="num">${r.preis===0?"inklusive":eur(r.menge*r.preis)}</td></tr>`).join("")}
+          ${pos.map(r=>`<tr><td>${esc(r.bez)}${r.txt?`<small>${esc(r.txt)}</small>`:""}</td><td class="num">${r.betrag?esc(r.betrag):r.preis===0?"inklusive":eur(r.menge*r.preis)}</td></tr>`).join("")}
           ${S.preis.brutto?`
           <tr class="sum"><td>Summe netto</td><td class="num">${eur(netto)}</td></tr>
           <tr class="sum"><td>zzgl. ${esc(S.preis.mwst)} % USt.</td><td class="num">${eur(mw)}</td></tr>
@@ -958,8 +996,8 @@ function render(){
   const pages = document.getElementById("pages");
   // Langer Kursplan (> 14 Kurse) bekommt Seite 2 für sich, der Ablauf rückt zu den Konditionen
   pages.innerHTML = page1 + (!mx ? folgeseite(2, ablauf+konditionen)
-    : mxN > 14 ? folgeseite(2, kursplan) + folgeseite(3, ablauf+konditionen)
-    : folgeseite(2, kursplan+ablauf) + folgeseite(3, konditionen));
+    : planTeile.map((t,i)=>folgeseite(2+i, t+(ablaufBeiPlan&&i===planTeile.length-1?ablauf:""))).join("")
+      + folgeseite(total, (ablaufBeiPlan?"":ablauf)+konditionen));
   document.title = dateiname(S);   // wird beim PDF-Druck und beim JSON-Speichern als Dateiname verwendet
   const ni = document.getElementById("nrInput"), nh = document.getElementById("nrHint");
   if(ni){ ni.classList.toggle("need", !nr); nh.classList.toggle("need", !nr); nh.textContent = nr ? "Dateiname: „"+document.title+"“" : "Pflichtfeld: Die Nummer erscheint im Angebot und im Dateinamen."; }
@@ -1011,6 +1049,8 @@ function syncForm(base, reise, netto, pers, maxP){
     ? "✓ "+mxd.kurse.length+" "+(mxd.kurse.length==1?"Kurs":"Kurse")+" übernommen · "+esc(MATRIX_FORMATE[mxd.format]||"")+(mxd.bestand?" · Bestandskunde":"")+(mxd.kartei?` · <a href="${esc(mxd.kartei)}" target="_blank" rel="noopener">Kartei öffnen</a>`:"")
     : "Normalerweise nicht nötig: In der Matrix unter Abschluss auf „Angebot erstellen“ klicken – der Generator öffnet sich fertig ausgefüllt. Der Link liegt dann auch in der Zwischenablage (Strg+V).";
   mi.className = "hint"+(mxd && mxd.kurse.length ? " ok" : "");
+  const rh2=document.getElementById("mxReiseHint"), vt=vorOrtTermine(S);
+  rh2.textContent = mxd && vt ? vt+" Vor-Ort-"+(vt==1?"Termin":"Termine")+", "+uebernachtungen(S)+" Übernachtungen"+(num(S.reise.proTermin)?" – es gilt die Pauschale":num(S.reise.kmTermin)?"":" – ohne Kilometer steht „nach Aufwand“ im Angebot") : "";
 
   // Kurzstatus in den Schritt-Überschriften
   const sv=(id,txt,cls)=>{ const e=document.getElementById(id); e.textContent=txt; e.className="sv"+(cls?" "+cls:""); };
