@@ -41,6 +41,7 @@ Dateiname immer `ANG-<Kunden-Nr.>_<Unternehmen>`; die Angebotsnummer ist die Kun
 - Mehr als 10 Teilnehmer (Inhouse, Kompetenzmodell je Kurs): Kurs wird mehrfach gebucht, jeder weitere Durchgang −20 %; jeder Vor-Ort-Durchgang zählt als eigener Anreise-Termin
 - Kompetenzmodell-Reisekosten: km je Termin × 0,60 € + Hotel ca. 90 € (Anreise am Vortag = 1 Nacht je Kurstag, sonst Kurstage − 1) oder Pauschale je Termin; ohne Angaben steht „nach Aufwand“ als eigene Position
 - Kursplan mit Agenda je Kurs (aus der Matrix), 12 Kurse je Seite; Hardware-Zeile und optionale Zusatzleistungen (VMs 29 €/Person/Tag) wie in der ppedv-Vorlage
+- Mehr als 10 Teilnehmer, aber nur 1–2 Personen darüber: per Häkchen Aufpreis 250 € je Person und Tag statt weiterem Durchgang (Ausnahme)
 - Ansprechpartner bei ppedv: feste Auswahl (`ANSPRECHPARTNER`), Auswahl merkt sich der Browser
 - „Ihre Investition“ zeigt Rabatte: durchgestrichener Normalpreis + „Sie sparen …“
 - Technologien, Vorkenntnisse, Voraussetzungen werden aus Kursen/Workshop/Format vorgeschlagen (`detailVorschlag()`); eigene Einträge bleiben

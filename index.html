@@ -293,6 +293,7 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
           </div>
           <label>Teilnehmer</label><input type="number" min="1" data-k="schulung.personen" class="pers">
           <p class="hint" id="persHint"></p>
+          <label class="check aufpreisOpt" data-cat="inhouse"><input type="checkbox" data-k="schulung.aufpreis"> Ausnahme: 1–2 Personen über 10 mit Aufpreis (250 € je Person und Tag) statt weiterem Durchgang</label>
 
           <label>Durchführung</label>
           <div class="seg" id="fmtSeg">
@@ -326,6 +327,7 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
             <p class="hint" id="mxInfo"></p>
           </div>
           <label>Preis je Kurs (€ netto)</label><input type="number" min="0" step="50" data-k="schulung.preis">
+          <label class="check aufpreisOpt" data-cat="kompetenz"><input type="checkbox" data-k="schulung.aufpreis"> Ausnahme: bei 1–2 Personen über 10 Aufpreis (250 € je Person und Tag) statt weiterem Durchgang</label>
           <div class="box">
             <div class="sub" style="margin:0;padding:0;border:0">Reisekosten Trainer <small style="font-weight:400;color:var(--ui-muted)">· 1:1 nach Aufwand</small></div>
             <div class="row"><div><label>Kilometer je Termin <small>(hin + zurück)</small></label><input type="number" min="0" data-k="reise.kmTermin" placeholder="z. B. 1200"></div><div><label>€ pro km</label><input type="number" min="0" step="0.01" data-k="reise.kmSatz"></div></div>
@@ -468,7 +470,8 @@ const PREIS = {
   inhouse: { online: 3500, standort: 3500, kunde: 4200 },    // Kategorie 2 (wie auf ppedv.de)
   maxPersonenInhouse: 10, rabattCode: "bestandskunde20", rabatt: 0.20,
   kompetenzKurs: 3500, kompetenzKursBestand: 2800,         // Kategorie 3 (wie in der Kompetenzmatrix)
-  wiederholRabatt: 0.20                                     // jeder weitere Durchgang ab 11 Teilnehmern
+  wiederholRabatt: 0.20,                                    // jeder weitere Durchgang ab 11 Teilnehmern
+  aufpreisPersonTag: 250                                    // Ausnahme: 1–2 Personen über 10, je Person und Tag
 };
 const STANDORTE = ["Burghausen","München","Berlin","Wien"];
 
@@ -716,11 +719,17 @@ function tageKat1(sch){
   return {g,h};
 }
 function zahl(n){ return String(n).replace(".",","); }
-// Mehr als 10 Teilnehmer (Inhouse/Kompetenzmodell): Kurs wird mehrfach gebucht, jeder weitere Durchgang −20 %
-function durchgaenge(teilnehmer){ const n=parseInt(String(teilnehmer||"").replace(/\D+/g,""),10)||0; return Math.max(1, Math.ceil(n/PREIS.maxPersonenInhouse)); }
+// Mehr als 10 Teilnehmer (Inhouse/Kompetenzmodell): Kurs wird mehrfach gebucht, jeder weitere Durchgang −20 %.
+// Ausnahme (Häkchen): Sind es nur 1–2 Personen über 10, statt weiterem Durchgang Aufpreis je Person und Tag.
+function teilnZahl(t){ return parseInt(String(t||"").replace(/\D+/g,""),10)||0; }
+function ueberhang(t){ const n=teilnZahl(t), r=n%PREIS.maxPersonenInhouse; return n>PREIS.maxPersonenInhouse && r>0 && r<=2 ? r : 0; }
+function aufpreisAktiv(){ return !!(S && S.schulung && S.schulung.aufpreis); }
+function zusatzPersonen(t){ return aufpreisAktiv() ? ueberhang(t) : 0; }
+function durchgaenge(teilnehmer){ const n=teilnZahl(teilnehmer)-zusatzPersonen(teilnehmer); return Math.max(1, Math.ceil(n/PREIS.maxPersonenInhouse)); }
+function aufpreisPosition(personentage, txt){ return {bez:"Aufpreis zusätzliche Teilnehmer", txt, menge:personentage, preis:PREIS.aufpreisPersonTag}; }
 function weitereDurchgaenge(anzahl, preis){
   const p=Math.round(preis*(1-PREIS.wiederholRabatt));
-  return {bez:"Weitere "+(anzahl==1?"Durchgang":"Durchgänge")+" (−20 %)", txt:anzahl+" × "+eur(p)+" · ab 11 Teilnehmern wird der Kurs mehrfach gebucht, je bis zu 10 Personen", menge:anzahl, preis:p};
+  return {bez:(anzahl==1?"Weiterer Durchgang":"Weitere Durchgänge")+" (−20 %)", txt:anzahl+" × "+eur(p)+" · ab 11 Teilnehmern wird der Kurs mehrfach gebucht, je bis zu 10 Personen", menge:anzahl, preis:p};
 }
 function dauerText(g,h){ return [g?tageText(g):"", h?h+" "+(h==1?"halber Tag":"halbe Tage"):""].filter(Boolean).join(" + "); }
 const ZEIT_GANZ = "09.00–17.00 Uhr", ZEIT_HALB = "halbtags 09.00–12.30 oder 13.30–17.00 Uhr";
@@ -757,6 +766,8 @@ function calc(s){
     const d=durchgaenge(sch.personen);
     pos.push({bez:PRESETS[s.preset].leistung, txt:"1 Tag, bis "+PREIS.maxPersonenInhouse+" Personen, inkl. Vorbereitung", menge:1, preis:base});
     if(d>1){ pos.push(weitereDurchgaenge(d-1, base)); rabatte.push({t:"weitere Durchgänge −20 %", b:(d-1)*(base-Math.round(base*(1-PREIS.wiederholRabatt)))}); }
+    const zp=zusatzPersonen(sch.personen);
+    if(zp) pos.push(aufpreisPosition(zp, zp+" "+(zp==1?"Person":"Personen")+" × "+eur(PREIS.aufpreisPersonTag)+" × 1 Tag · statt weiterem Durchgang"));
     if(rabattOk(s)){ pos.push({bez:"Rabatt Bestandskunde (−20 %)", txt:"auf die Pauschale des ersten Durchgangs", menge:1, preis:-Math.round(base*PREIS.rabatt)}); rabatte.push({t:"Bestandskunde −20 %", b:Math.round(base*PREIS.rabatt)}); }
   }
   let reise=0;
@@ -769,6 +780,8 @@ function calc(s){
     const best = s.matrix.bestand && p<PREIS.kompetenzKurs, voll = best ? PREIS.kompetenzKurs : p, w=x=>Math.round(x*(1-PREIS.wiederholRabatt));
     if(best) rabatte.push({t:"Bestandskundenpreis", b:n*(voll-p)+extra*(w(voll)-w(p))});
     if(extra){ pos.push(weitereDurchgaenge(extra, p)); rabatte.push({t:"weitere Durchgänge −20 %", b:extra*(voll-w(voll))}); }
+    const pt=s.matrix.kurse.reduce((x,c)=>x+zusatzPersonen(c.tn)*kurstage(c.t),0);
+    if(pt) pos.push(aufpreisPosition(pt, pt+" Personentage × "+eur(PREIS.aufpreisPersonTag)+" · 1–2 Personen über 10 je Kurs, statt weiterem Durchgang"));
     // Reisekosten Trainer: Pauschale je Termin ODER km + Hotel ODER „nach Aufwand“ – immer als eigene Position
     if(v){
       const termine=v+" Vor-Ort-"+(v==1?"Termin":"Termine"), km=num(r.kmTermin), nae=uebernachtungen(s);
@@ -868,8 +881,10 @@ function render(){
   const maxP = kat==="oeffentlich" ? PREIS.maxPersonenSchulung : PREIS.maxPersonenInhouse;
   const pers = num(sch.personen);
   const dg = kat==="inhouse" ? durchgaenge(pers) : 1;
-  const persText = dg>1 ? pers+" Personen in "+dg+" Durchgängen (je max. "+maxP+")"
-    : pers ? pers+" "+(pers==1?"Person":"Personen")+" (max. "+maxP+")" : "bis zu "+maxP+" Personen";
+  const zpI = kat==="inhouse" ? zusatzPersonen(pers) : 0;
+  const persText = (dg>1 ? pers+" Personen in "+dg+" Durchgängen (je max. "+maxP+")"
+    : pers ? pers+" "+(pers==1?"Person":"Personen")+(zpI?"":" (max. "+maxP+")") : "bis zu "+maxP+" Personen")
+    + (zpI ? " – davon "+zpI+" mit Aufpreis" : "");
   const kurs = kursInfo(sch.kurs);
   // Kategorie 1: Titel, Betreff, Eckdaten und Link ergeben sich aus dem gewählten Kurs
   const titel = p.titel || (kat==="oeffentlich" ? (sch.kurs||"Schulung") : "");
@@ -898,7 +913,7 @@ function render(){
   // Kursplan mit Agenda je Kurs – bei vielen Kursen über mehrere Seiten
   const mitAgenda = mx && mx.kurse.some(c=>c.ag && c.ag.length);
   const proSeite = mitAgenda ? 12 : 18;
-  const kursZeile = (c,i)=>`<tr><td>${i+1}</td><td>${esc(c.n)}${c.pflicht?" <em>immer dabei</em>":""}${mitAgenda?`<div class="agl">${esc(c.ag&&c.ag.length?c.ag.join(" · "):"Inhalte laut Kursbeschreibung auf ppedv.de")}</div>`:""}</td><td>${esc(c.t||"")}</td><td>${esc(c.ort||"")}</td><td>${esc(c.team||"")}${c.tn?` <small>(${esc(c.tn)}${durchgaenge(c.tn)>1?" · "+durchgaenge(c.tn)+" Durchgänge":""})</small>`:""}</td></tr>`;
+  const kursZeile = (c,i)=>`<tr><td>${i+1}</td><td>${esc(c.n)}${c.pflicht?" <em>immer dabei</em>":""}${mitAgenda?`<div class="agl">${esc(c.ag&&c.ag.length?c.ag.join(" · "):"Inhalte laut Kursbeschreibung auf ppedv.de")}</div>`:""}</td><td>${esc(c.t||"")}</td><td>${esc(c.ort||"")}</td><td>${esc(c.team||"")}${c.tn?` <small>(${esc(c.tn)}${durchgaenge(c.tn)>1?" · "+durchgaenge(c.tn)+" Durchgänge":""}${zusatzPersonen(c.tn)?" · "+zusatzPersonen(c.tn)+" mit Aufpreis":""})</small>`:""}</td></tr>`;
   const planTeile = [];
   if(mx) for(let i=0;i<mxN;i+=proSeite) planTeile.push(`
     <div class="kicker">Ihr Kursplan${i?" (Fortsetzung)":""}</div>
@@ -1052,6 +1067,7 @@ function syncForm(base, reise, netto, pers, maxP){
   const mehrfach = kat==="inhouse" && pers>maxP, zuViel = pers>maxP && !mehrfach;
   const ph=document.getElementById("persHint");
   ph.textContent = zuViel ? "Achtung: Der Tagessatz gilt für maximal "+maxP+" Personen."
+    : mehrfach && zusatzPersonen(pers) ? (durchgaenge(pers)>1?durchgaenge(pers)+" Durchgänge, ":"")+zusatzPersonen(pers)+" "+(zusatzPersonen(pers)==1?"Person":"Personen")+" mit Aufpreis "+eur(PREIS.aufpreisPersonTag)+" je Tag."
     : mehrfach ? durchgaenge(pers)+" Durchgänge à max. "+maxP+" Personen – jeder weitere Durchgang −20 %."
     : (kat==="oeffentlich" ? "Tagessatz gilt für bis zu "+maxP+" Personen." : "");
   ph.classList.toggle("need", zuViel); ph.classList.toggle("ok", mehrfach);
@@ -1065,6 +1081,10 @@ function syncForm(base, reise, netto, pers, maxP){
   pl.textContent = kat==="oeffentlich" ? "Tagessatz (€ netto)" : "Workshop-Pauschale (€ netto)";
   phi.textContent = num(sch.preis)===num(std) ? "" : "Preis angepasst (Standard: "+eur(num(std))+").";
   phi.className = "hint need";
+
+  // Aufpreis-Ausnahme nur anbieten, wenn irgendwo 1–2 Personen über 10 sind
+  const ueber = kat==="inhouse" ? ueberhang(sch.personen)>0 : kat==="kompetenz" && S.matrix ? S.matrix.kurse.some(c=>ueberhang(c.tn)>0) : false;
+  document.querySelectorAll(".aufpreisOpt").forEach(el=>{ if(!ueber) el.hidden=true; });
 
   const abs=document.getElementById("abSelect"), apAkt=findeAnsprechpartner(S.absender.name);
   if(apAkt && abs.value!==apAkt.name) abs.value=apAkt.name;
