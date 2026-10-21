@@ -36,7 +36,7 @@ Dateiname immer `ANG-<Angebots-Nr.>_<Unternehmen>`; die Angebotsnummer ist die *
 
 - Schulungszeiten 09.00–17.00 Uhr, halbtags 09.00–12.30 oder 13.30–17.00 Uhr
 - Zahlungsbedingung: monatlich nach Leistungserbringung, 10 Tage netto
-- Umsatzsteuer: Deutschland 19 % mit Bruttobetrag; Kunden im Ausland (Feld „Land“) nur netto + „zzgl. gesetzlicher Umsatzsteuer“ (z. B. Reverse Charge – klärt die Rechnung)
+- Umsatzsteuer (`steuerModus()`): Deutschland 19 % mit Brutto; **Österreich Reverse-Charge-Verfahren** (Steuerschuldnerschaft des Leistungsempfängers, UID-Nr. des Kunden im Angebot); übriges Ausland netto + „zzgl. gesetzlicher Umsatzsteuer“; Schulung an deutschem ppedv-Standort immer 19 %
 - Digitales ppedv Teilnehmerzertifikat inklusive; nicht gendern; keine Ergebnisversprechen
 - Kompetenzmodell: Zeitraum nach Vereinbarung (keine Wochenangaben im Angebot)
 - Mehr als 10 Teilnehmer (Inhouse, Kompetenzmodell je Kurs): Kurs wird mehrfach gebucht, jeder weitere Durchgang −20 %; jeder Vor-Ort-Durchgang zählt als eigener Anreise-Termin
