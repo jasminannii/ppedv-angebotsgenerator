@@ -36,7 +36,16 @@ Dateiname immer `ANG-<Angebots-Nr.>_<Unternehmen>`; die Angebotsnummer ist die *
 
 - Schulungszeiten 09.00–17.00 Uhr, halbtags 09.00–12.30 oder 13.30–17.00 Uhr
 - Zahlungsbedingung: monatlich nach Leistungserbringung, 10 Tage netto
-- Umsatzsteuer (`steuerModus()`): Deutschland 19 % mit Brutto; **Österreich Reverse-Charge-Verfahren** (Steuerschuldnerschaft des Leistungsempfängers, UID-Nr. des Kunden im Angebot); übriges Ausland netto + „zzgl. gesetzlicher Umsatzsteuer“; Schulung an deutschem ppedv-Standort immer 19 %
+- Umsatzsteuer (`steuerModus()`, `STEUER_TEXT`): im Preiskasten nur „netto“, Steuer erst in der Preistabelle.
+  Deutschland 19 % mit Brutto (leerer Satz = 19 %) · **österreichische Firma (UID eingetragen): Reverse-Charge-Verfahren** ·
+  Firma in Schweiz/Liechtenstein (UID): in Deutschland nicht steuerbar (Bezugsteuer beim Kunden) · ohne UID, übriges Ausland
+  oder Seminar am Standort Wien: „zzgl. gesetzlicher Umsatzsteuer“ · Schulung an deutschem ppedv-Standort immer 19 %.
+  Recherche (nicht steuerlich geprüft): Österreich – für Eintrittsberechtigungen zu Seminaren seit 2012 kein Reverse Charge
+  ([ICON](https://www.icon.at/news/detail/umsatzsteuer-neuerungen-fuer-das-jahr-2012-durch-das-abgaeg-2011));
+  Deutschland – offene vs. geschlossene Veranstaltungen, A 3a.7a UStAE seit 2021
+  ([NWB](https://www.nwb-experten-blog.de/das-ende-der-geschlossenen-veranstaltung/),
+  [Haufe](https://www.haufe.de/finance/haufe-finance-office-premium/veranstaltungsleistungen-in-der-umsatzsteuer-25-steuerschuldner_idesk_PI20354_HI15284072.html));
+  Schweiz – B2B-Leistungsort beim Kunden, Bezugsteuer ([sevdesk](https://sevdesk.de/rechnung-in-schweiz-muster/))
 - Digitales ppedv Teilnehmerzertifikat inklusive; nicht gendern; keine Ergebnisversprechen
 - Kompetenzmodell: Zeitraum nach Vereinbarung (keine Wochenangaben im Angebot)
 - Mehr als 10 Teilnehmer (Inhouse, Kompetenzmodell je Kurs): Kurs wird mehrfach gebucht, jeder weitere Durchgang −20 %; jeder Vor-Ort-Durchgang zählt als eigener Anreise-Termin

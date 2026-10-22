@@ -280,7 +280,7 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
         <label>Straße</label><input data-k="kunde.strasse">
         <div class="row"><div><label>PLZ</label><input data-k="kunde.plz"></div><div><label>Ort</label><input data-k="kunde.ort"></div></div>
         <label>Land</label><select data-k="kunde.land" id="landSelect"><option>Deutschland</option><option>Österreich</option><option>Schweiz</option><option>Liechtenstein</option><option>Luxemburg</option><option>Niederlande</option><option>Belgien</option><option>Italien</option><option>Frankreich</option></select>
-        <div id="uidWrap"><label>UID-Nummer des Kunden <small>(für Reverse Charge)</small></label><input data-k="kunde.uid" placeholder="z. B. ATU12345678" autocomplete="off"></div>
+        <div id="uidWrap"><label>UID-Nummer des Kunden <small>(nur Firmen – Voraussetzung für Reverse Charge)</small></label><input data-k="kunde.uid" placeholder="z. B. ATU12345678 / CHE-123.456.789" autocomplete="off"></div>
         <p class="hint" id="steuerHint"></p>
         <label>E-Mail</label><input data-k="kunde.email">
       </details>
@@ -825,15 +825,35 @@ function addDays(iso,n){ const d=new Date(iso+"T12:00:00"); d.setDate(d.getDate(
 
 // Land in der Anschrift: bei Deutschland weglassen, sonst in Großbuchstaben (DIN 5008)
 function auslandText(k){ const l=String(k.land||"").trim(); return !l || /^(deutschland|germany|de)$/i.test(l) ? "" : l.toUpperCase(); }
-// Umsatzsteuer im Angebot: "de" = 19 % mit Brutto · "rc" = Österreich, Reverse-Charge-Verfahren ·
-// "ausland" = übriges Ausland, nur „zzgl. gesetzlicher Umsatzsteuer“.
-// Ausnahme: Schulung an einem deutschen ppedv-Standort → Ort der Veranstaltung zählt, deutsche USt.
+// ---------- Umsatzsteuer im Angebot ----------
+// "de"        Deutschland – 19 % mit Bruttobetrag
+// "rc"        österreichische Firma (UID eingetragen) – Reverse-Charge-Verfahren
+// "drittland" Schweiz/Liechtenstein, Firma (UID) – in Deutschland nicht steuerbar, Bezugsteuer beim Kunden
+// "ausland"   übriges Ausland, Privatkunden ohne UID, Seminar am Standort Wien – „zzgl. gesetzlicher Umsatzsteuer“
+// Schulung an einem deutschen ppedv-Standort: Ort der Veranstaltung zählt → deutsche USt.
+// Standort Wien: für Seminare in Österreich gibt es kein Reverse Charge (österreichische USt) → neutral.
+// Rechtliche Grundlage recherchiert, aber nicht steuerlich geprüft – siehe README.
+const STEUER_TEXT = {
+  de:        { kurz:"", zeile:"", satz:"Alle Preise verstehen sich zzgl. der gesetzlichen USt.", hinweis:"Schulung an einem deutschen ppedv-Standort: deutsche USt (19 %)." },
+  rc:        { kurz:"Reverse Charge", zeile:"Steuerschuldnerschaft des Leistungsempfängers (Reverse-Charge-Verfahren)",
+               satz:"Alle Preise sind Nettopreise; die Umsatzsteuer schuldet der Leistungsempfänger (Reverse-Charge-Verfahren).", hinweis:"Österreichische Firma: Reverse-Charge-Verfahren." },
+  drittland: { kurz:"nicht steuerbar", zeile:"In Deutschland nicht steuerbare Leistung (Leistungsort beim Leistungsempfänger)",
+               satz:"Alle Preise sind Nettopreise; die Leistung ist in Deutschland nicht steuerbar, die Steuer (Bezugsteuer) schuldet der Leistungsempfänger.", hinweis:"Firma in der Schweiz/Liechtenstein: in Deutschland nicht steuerbar." },
+  ausland:   { kurz:"zzgl. gesetzl. USt.", zeile:"zzgl. gesetzlicher Umsatzsteuer", satz:"Alle Preise verstehen sich zzgl. der gesetzlichen Umsatzsteuer.",
+               hinweis:"Ohne UID-Nummer (keine Firma) bzw. Seminar in Wien: „zzgl. gesetzlicher Umsatzsteuer“." }
+};
 function steuerModus(s){
   if(!auslandText(s.kunde)) return "de";
-  const dtStandort = (s.kategorie==="oeffentlich"||s.kategorie==="inhouse") && s.schulung.format==="standort" && s.schulung.standort!=="Wien";
-  if(dtStandort) return "de";
-  return /^(österreich|oesterreich|austria|at)$/i.test(String(s.kunde.land||"").trim()) ? "rc" : "ausland";
+  const am = s.kategorie==="oeffentlich"||s.kategorie==="inhouse";
+  if(am && s.schulung.format==="standort" && s.schulung.standort!=="Wien") return "de";
+  const firma = !!String(s.kunde.uid||"").trim(), land = String(s.kunde.land||"").trim();
+  if(!firma || (am && s.schulung.format==="standort" && s.schulung.standort==="Wien")) return "ausland";
+  if(/^(österreich|oesterreich|austria|at)$/i.test(land)) return "rc";
+  if(/^(schweiz|liechtenstein|ch|li)$/i.test(land)) return "drittland";
+  return "ausland";
 }
+// Steuersatz Deutschland – leeres Feld gilt als 19 %
+function mwstSatz(s){ const v=s.preis&&s.preis.mwst; return v===""||v==null ? 19 : num(v); }
 function anrede(k){
   if(k.anrede==="Frau" && k.nachname) return "Sehr geehrte Frau "+k.nachname+",";
   if(k.anrede==="Herr" && k.nachname) return "Sehr geehrter Herr "+k.nachname+",";
@@ -891,11 +911,11 @@ function render(){
   autoDetails(S);
   const k=S.kunde, a=S.angebot, p=S.produkt, sch=S.schulung, kat=S.kategorie;
   const {pos, netto, base, reise, rabatte, ersparnis} = calc(S);
-  const mw = netto*(num(S.preis.mwst)/100);
-  // Kunden außerhalb Deutschlands: keine 19 % ausweisen, nur „zzgl. gesetzlicher Umsatzsteuer“ (Steuer klärt die Rechnung)
+  const satz = mwstSatz(S), mw = netto*(satz/100);
+  // Umsatzsteuer steht erst unten in der Preistabelle; oben im Preiskasten nur „netto“
   const steuer = steuerModus(S), ausland = steuer!=="de";
-  const ustText = steuer==="rc" ? "netto, Reverse-Charge-Verfahren" : ausland ? "netto, zzgl. gesetzlicher Umsatzsteuer" : "netto, zzgl. "+S.preis.mwst+" % USt.";
-  const ustSatz = steuer==="rc" ? "Alle Preise sind Nettopreise; die Umsatzsteuer schuldet der Leistungsempfänger (Reverse-Charge-Verfahren)"+(String(k.uid||"").trim()?".":" – bitte teilen Sie uns dafür Ihre UID-Nummer mit.") : "Alle Preise verstehen sich zzgl. der gesetzlichen USt.";
+  const ustText = "netto";
+  const ustSatz = STEUER_TEXT[steuer].satz;
   const nr = angebotsNr(S);
   const nrOut = nr ? esc(nr) : '<span class="missing">bitte eintragen</span>';
   const person = [k.anrede==="Frau"?"Frau":k.anrede==="Herr"?"Herrn":"", k.vorname, k.nachname].filter(Boolean).join(" ");
@@ -1031,10 +1051,10 @@ function render(){
           ${pos.map(r=>`<tr><td>${esc(r.bez)}${r.txt?`<small>${esc(r.txt)}</small>`:""}</td><td class="num">${r.betrag?esc(r.betrag):r.preis===0?"inklusive":eur(r.menge*r.preis)}</td></tr>`).join("")}
           ${S.preis.brutto && !ausland?`
           <tr class="sum"><td>Summe netto</td><td class="num">${eur(netto)}</td></tr>
-          <tr class="sum"><td>zzgl. ${esc(S.preis.mwst)} % USt.</td><td class="num">${eur(mw)}</td></tr>
+          <tr class="sum"><td>zzgl. ${esc(zahl(satz))} % USt.</td><td class="num">${eur(mw)}</td></tr>
           <tr class="total"><td>Gesamtbetrag</td><td class="num">${eur(netto+mw)}</td></tr>`
           :`<tr class="total"><td>Gesamt netto</td><td class="num">${eur(netto)}</td></tr>
-          ${ausland?`<tr class="sum"><td colspan="2">${steuer==="rc"?"Steuerschuldnerschaft des Leistungsempfängers (Reverse-Charge-Verfahren)":"zzgl. gesetzlicher Umsatzsteuer"}</td></tr>`:""}`}
+          ${ausland?`<tr class="sum"><td colspan="2">${esc(STEUER_TEXT[steuer].zeile)}</td></tr>`:""}`}
         </table>
         ${pHinweis?`<div class="pnote">${esc(pHinweis)}</div>`:""}
       </div>
@@ -1120,10 +1140,8 @@ function syncForm(base, reise, netto, pers, maxP){
   // Umsatzsteuer-Hinweis zum Land
   const st=steuerModus(S), sh=document.getElementById("steuerHint");
   document.getElementById("uidWrap").hidden = !auslandText(S.kunde);
-  sh.textContent = st==="rc" ? "Österreich: Reverse-Charge-Verfahren – keine deutsche USt im Angebot."
-    : st==="ausland" ? "Ausland: Angebot netto, „zzgl. gesetzlicher Umsatzsteuer“."
-    : auslandText(S.kunde) ? "Schulung an einem deutschen ppedv-Standort: deutsche USt (19 %)." : "";
-  sh.className = "hint"+(st==="rc"?" ok":"");
+  sh.textContent = auslandText(S.kunde) ? STEUER_TEXT[st].hinweis : "";
+  sh.className = "hint"+(st==="rc"||st==="drittland"?" ok":"");
 
   const abs=document.getElementById("abSelect"), apAkt=findeAnsprechpartner(S.absender.name);
   if(apAkt && abs.value!==apAkt.name) abs.value=apAkt.name;
@@ -1144,10 +1162,10 @@ function syncForm(base, reise, netto, pers, maxP){
   sv("svPreis", eur(netto)+" netto");
 
   // Preisübersicht unten in der Seitenleiste
-  const {pos} = calc(S), mw = netto*(num(S.preis.mwst)/100);
+  const {pos} = calc(S), mw = netto*(mwstSatz(S)/100);
   document.getElementById("sidesum").innerHTML =
     pos.filter(x=>x.preis).map(x=>`<div class="ln"><span>${esc(x.bez)}</span><span>${eur(x.menge*x.preis)}</span></div>`).join("") +
-    `<div class="tot"><span>Netto <b>${eur(netto)}</b></span><small>${steuerModus(S)==="rc"?"Reverse Charge":steuerModus(S)==="ausland"?"zzgl. gesetzl. USt.":"Brutto "+eur(netto+mw)}</small></div>`;
+    `<div class="tot"><span>Netto <b>${eur(netto)}</b></span><small>${steuerModus(S)==="de"?"Brutto "+eur(netto+mw):STEUER_TEXT[steuerModus(S)].kurz}</small></div>`;
 }
 
 // Die Angebotsnummer ist immer die Ansprechpartner-ID aus Nina (z. B. 86919); Feldname kundennr aus Kompatibilität
