@@ -279,10 +279,9 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
         </div>
         <label>Straße</label><input data-k="kunde.strasse">
         <div class="row"><div><label>PLZ</label><input data-k="kunde.plz"></div><div><label>Ort</label><input data-k="kunde.ort"></div></div>
-        <label>Land</label><input data-k="kunde.land" list="laender" autocomplete="off">
+        <label>Land</label><select data-k="kunde.land" id="landSelect"><option>Deutschland</option><option>Österreich</option><option>Schweiz</option><option>Liechtenstein</option><option>Luxemburg</option><option>Niederlande</option><option>Belgien</option><option>Italien</option><option>Frankreich</option></select>
         <div id="uidWrap"><label>UID-Nummer des Kunden <small>(für Reverse Charge)</small></label><input data-k="kunde.uid" placeholder="z. B. ATU12345678" autocomplete="off"></div>
         <p class="hint" id="steuerHint"></p>
-        <datalist id="laender"><option>Deutschland</option><option>Österreich</option><option>Schweiz</option><option>Liechtenstein</option><option>Luxemburg</option><option>Niederlande</option><option>Belgien</option><option>Italien</option><option>Frankreich</option></datalist>
         <label>E-Mail</label><input data-k="kunde.email">
       </details>
 
@@ -1111,6 +1110,12 @@ function syncForm(base, reise, netto, pers, maxP){
   // Aufpreis-Ausnahme nur anbieten, wenn irgendwo 1–2 Personen über 10 sind
   const ueber = kat==="inhouse" ? ueberhang(sch.personen)>0 : kat==="kompetenz" && S.matrix ? S.matrix.kurse.some(c=>ueberhang(c.tn)>0) : false;
   document.querySelectorAll(".aufpreisOpt").forEach(el=>{ if(!ueber) el.hidden=true; });
+
+  // Land-Auswahl: fehlt ein gespeichertes Land in der Liste, wird es ergänzt
+  const ls=document.getElementById("landSelect");
+  if(!S.kunde.land) S.kunde.land="Deutschland";
+  if(![...ls.options].some(o=>o.value===S.kunde.land)) ls.add(new Option(S.kunde.land));
+  if(ls.value!==S.kunde.land) ls.value=S.kunde.land;
 
   // Umsatzsteuer-Hinweis zum Land
   const st=steuerModus(S), sh=document.getElementById("steuerHint");
