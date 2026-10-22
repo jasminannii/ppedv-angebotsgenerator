@@ -580,10 +580,10 @@ const BRIEF_WORKSHOP = "vielen Dank für das angenehme Gespräch und Ihr Interes
 const KATEGORIEN = {
   oeffentlich: {
     betreff: "", personen: 6,
-    brief: "vielen Dank für das angenehme Gespräch und Ihr Interesse an Wissensvermittlung. Wie besprochen erhalten Sie unser Angebot für die Schulung Ihres Teams – zur Tagespauschale, online oder an einem ppedv-Standort.\n\nAuf der folgenden Seite finden Sie alle Rahmendaten und die Preisübersicht. Gerne stimmen wir Inhalte und Schwerpunkte vorab mit Ihnen ab.",
+    brief: "vielen Dank für das angenehme Gespräch und Ihr Interesse an Wissensvermittlung. Wie besprochen erhalten Sie unser Angebot für die Schulung Ihres Teams – zum Tagessatz, online, an einem ppedv-Standort oder bei Ihnen vor Ort.\n\nAuf der folgenden Seite finden Sie alle Rahmendaten und die Preisübersicht. Gerne stimmen wir Inhalte und Schwerpunkte vorab mit Ihnen ab.",
     rahmen: "Termin | nach Vereinbarung\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive",
     positionen: "",
-    produkt: { eyebrow: "Schulung · ppedv Kursprogramm", titel: "", untertitel: "Praxisnahe Schulung mit erfahrenen ppedv-Trainern – exklusiv für Ihr Team, live online oder an einem ppedv-Standort.",
+    produkt: { eyebrow: "Schulung · ppedv Kursprogramm", titel: "", untertitel: "Praxisnahe Schulung mit erfahrenen ppedv-Trainern – exklusiv für Ihr Team, live online, an einem ppedv-Standort oder bei Ihnen vor Ort.",
       chips: "", nutzenTitel: "", nutzen: "", stepsIntro: "", steps: "", takeaways: "", zielgruppe: "", hinweis: "", link: "" }
   },
   inhouse: {
@@ -624,7 +624,6 @@ function applyKategorie(s,kat){
   s.angebot.brief = K.brief;
   s.rahmen = K.rahmen;
   s.schulung.personen = K.personen;
-  if(kat==="oeffentlich" && s.schulung.format==="kunde") s.schulung.format="standort";
   s.schulung.preis = defaultPreis(s);
   s.schulung.preisHalb = PREIS.halberTag;
   if(kat==="inhouse"){ applyPreset(s, PRESETS[s.preset] ? s.preset : "A"); return; }
@@ -712,7 +711,7 @@ function formatText(s){
 function tageText(n){ return n+" "+(n==1?"Tag":"Tage"); }
 function rabattOk(s){ return String(s.schulung.rabatt||"").trim().toLowerCase()===PREIS.rabattCode; }
 function reiseAktiv(s){
-  if(s.kategorie==="oeffentlich") return s.schulung.format==="standort";
+  if(s.kategorie==="oeffentlich") return s.schulung.format!=="online";
   if(s.kategorie==="inhouse") return s.schulung.format!=="online";
   return false;
 }
@@ -840,15 +839,21 @@ const STEUER_TEXT = {
   drittland: { kurz:"nicht steuerbar", zeile:"In Deutschland nicht steuerbare Leistung (Leistungsort beim Leistungsempfänger)",
                satz:"Alle Preise sind Nettopreise; die Leistung ist in Deutschland nicht steuerbar, die Steuer (Bezugsteuer) schuldet der Leistungsempfänger.", hinweis:"Firma in der Schweiz/Liechtenstein: in Deutschland nicht steuerbar." },
   ausland:   { kurz:"zzgl. gesetzl. USt.", zeile:"zzgl. gesetzlicher Umsatzsteuer", satz:"Alle Preise verstehen sich zzgl. der gesetzlichen Umsatzsteuer.",
-               hinweis:"Ohne UID-Nummer (keine Firma) bzw. Seminar in Wien: „zzgl. gesetzlicher Umsatzsteuer“." }
+               hinweis:"„zzgl. gesetzlicher Umsatzsteuer“ (ohne UID, Seminar in Wien oder Schulung vor Ort in Österreich)." }
 };
+// Findet (mindestens ein Teil der) Schulung beim Kunden vor Ort statt?
+function vorOrtBeimKunden(s){
+  if(s.kategorie==="kompetenz") return !!(s.matrix && s.matrix.kurse.some(c=>c.ort!=="online"));
+  return s.schulung.format==="kunde";
+}
 function steuerModus(s){
   if(!auslandText(s.kunde)) return "de";
   const am = s.kategorie==="oeffentlich"||s.kategorie==="inhouse";
   if(am && s.schulung.format==="standort" && s.schulung.standort!=="Wien") return "de";
   const firma = !!String(s.kunde.uid||"").trim(), land = String(s.kunde.land||"").trim();
   if(!firma || (am && s.schulung.format==="standort" && s.schulung.standort==="Wien")) return "ausland";
-  if(/^(österreich|oesterreich|austria|at)$/i.test(land)) return "rc";
+  // Österreich: Reverse Charge nur für Online-Schulungen; vor Ort in Österreich kann österreichische USt anfallen
+  if(/^(österreich|oesterreich|austria|at)$/i.test(land)) return vorOrtBeimKunden(s) ? "ausland" : "rc";
   if(/^(schweiz|liechtenstein|ch|li)$/i.test(land)) return "drittland";
   return "ausland";
 }
@@ -936,7 +941,7 @@ function render(){
   const mx = kat==="kompetenz" && S.matrix && S.matrix.kurse.length ? S.matrix : null;
   const mxN = mx ? mx.kurse.length : 0, mxV = vorOrtTermine(S);
   const mxChips = mx ? [mxN+" "+(mxN==1?"Kurs":"Kurse"), MATRIX_FORMATE[mx.format]||"", mx.mitarbeitende?mx.mitarbeitende+" Mitarbeiter":""].filter(Boolean) : [];
-  const chips = (kat==="oeffentlich" ? [dauer, "bis zu "+maxP+" Personen", sch.format==="online"?"online":"ppedv-Standort "+sch.standort] : mx ? mxChips : []).concat(mx ? [] : lines(p.chips));
+  const chips = (kat==="oeffentlich" ? [dauer, "bis zu "+maxP+" Personen", sch.format==="online"?"online":sch.format==="kunde"?"bei Ihnen vor Ort":"ppedv-Standort "+sch.standort] : mx ? mxChips : []).concat(mx ? [] : lines(p.chips));
   const teaser = kat==="oeffentlich" ? dauer+" · bis zu "+maxP+" Personen · Tagessatz"
     : kat==="inhouse" ? (dg>1 ? dg+" Durchgänge à 1 Tag · je bis zu "+maxP+" Personen" : "1 Tag · bis zu "+maxP+" Personen · Festpreis für Ihr Team")
     : mx ? mxN+" "+(mxN==1?"Kurs":"Kurse")+" × "+eur(num(sch.preis))+" · Zeitraum nach Vereinbarung"
@@ -1104,7 +1109,7 @@ function syncForm(base, reise, netto, pers, maxP){
   });
   document.querySelectorAll("[data-kat]").forEach(b=>b.classList.toggle("on", b.dataset.kat===kat));
   document.querySelectorAll("[data-preset]").forEach(b=>b.classList.toggle("on", b.dataset.preset===S.preset));
-  document.querySelectorAll("[data-fmt]").forEach(b=>{ b.classList.toggle("on", b.dataset.fmt===sch.format); b.hidden = kat==="oeffentlich" && b.dataset.fmt==="kunde"; });
+  document.querySelectorAll("[data-fmt]").forEach(b=>{ b.classList.toggle("on", b.dataset.fmt===sch.format); });
   document.getElementById("standortWrap").hidden = sch.format!=="standort";
   document.getElementById("reiseBox").hidden = !reiseAktiv(S);
 

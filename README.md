@@ -6,7 +6,7 @@ A4-Vorschau; „PDF erstellen“ → im Druckdialog „Als PDF speichern“.
 ## Kategorien
 
 1. **Öffentliche Schulung** – Kurs aus dem ppedv-Programm, Tagessatz 2.190 € (halber Tag 1.390 €, ohne Vorbereitung) für bis zu
-   6 Personen, ganze und halbe Tage, online oder ppedv-Standort; optional Vorbereitung (halbe Dauer ×
+   6 Personen, ganze und halbe Tage, online, ppedv-Standort oder beim Kunden vor Ort; optional Vorbereitung (halbe Dauer ×
    Tagessatz); Reisekosten Trainer 1:1 (0,60 €/km, Hotel ca. 90 €).
 2. **Inhouse-Workshop A/B** – KI-Abläufe oder Copilot-Praxistag: online/Standort 3.500 €,
    beim Kunden 4.200 €; Rabattcode `bestandskunde20` = −20 % auf die Pauschale (nicht auf die Anreise).
@@ -37,7 +37,7 @@ Dateiname immer `ANG-<Angebots-Nr.>_<Unternehmen>`; die Angebotsnummer ist die *
 - Schulungszeiten 09.00–17.00 Uhr, halbtags 09.00–12.30 oder 13.30–17.00 Uhr
 - Zahlungsbedingung: monatlich nach Leistungserbringung, 10 Tage netto
 - Umsatzsteuer (`steuerModus()`, `STEUER_TEXT`): im Preiskasten nur „netto“, Steuer erst in der Preistabelle.
-  Deutschland 19 % mit Brutto (leerer Satz = 19 %) · **österreichische Firma (UID eingetragen): Reverse-Charge-Verfahren** ·
+  Deutschland 19 % mit Brutto (leerer Satz = 19 %) · **österreichische Firma (UID eingetragen), Online-Schulung: Reverse-Charge-Verfahren** (vor Ort in Österreich: „zzgl. gesetzlicher Umsatzsteuer“) ·
   Firma in Schweiz/Liechtenstein (UID): in Deutschland nicht steuerbar (Bezugsteuer beim Kunden) · ohne UID, übriges Ausland
   oder Seminar am Standort Wien: „zzgl. gesetzlicher Umsatzsteuer“ · Schulung an deutschem ppedv-Standort immer 19 %.
   Recherche (nicht steuerlich geprüft): Österreich – für Eintrittsberechtigungen zu Seminaren seit 2012 kein Reverse Charge
