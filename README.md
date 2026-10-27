@@ -10,7 +10,7 @@ A4-Vorschau; „PDF erstellen“ → im Druckdialog „Als PDF speichern“.
    Tagessatz); Reisekosten Trainer 1:1 (0,60 €/km, Hotel ca. 90 €).
 2. **Inhouse-Workshop A/B** – KI-Abläufe oder Copilot-Praxistag: online/Standort 3.500 €,
    beim Kunden 4.200 €; Rabattcode `bestandskunde20` = −20 % auf die Pauschale (nicht auf die Anreise).
-3. **Kompetenzmodell** – kommt aus der Kompetenzmatrix
+3. **Kompetenzmodell** – Preis **je Schulungstag** laut ppedv-Kursdauer: 3.500 € (Bestandskunde 2.800 €), z. B. Power-Woche 5 Tage = 17.500 €; Kurse bis 4 Std. = halber Tag. Kommt aus der Kompetenzmatrix
    (https://ppedv-kompetenzmatrix.vercel.app, Abschluss → „Link für Angebotsgenerator“; Bestandskunde per Häkchen hier).
 
 Alle Preise sind vorausgewählt und im Formular änderbar (`PREIS` im Code).

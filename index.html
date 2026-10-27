@@ -333,7 +333,7 @@ table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
             <p class="hint" id="mxInfo"></p>
           </div>
           <label class="check"><input type="checkbox" id="mxBestand"> Bestandskunde (2.800 € statt 3.500 € je Kurs)</label>
-          <label>Preis je Kurs (€ netto)</label><input type="number" min="0" step="50" data-k="schulung.preis">
+          <label>Preis je Schulungstag (€ netto) <small>(Kursdauer laut ppedv-Kursprogramm)</small></label><input type="number" min="0" step="50" data-k="schulung.preis">
           <label class="check aufpreisOpt" data-cat="kompetenz"><input type="checkbox" data-k="schulung.aufpreis"> Ausnahme: bei 1–2 Personen über 10 Aufpreis (250 € je Person und Tag) statt weiterem Durchgang</label>
           <div class="box">
             <div class="sub" style="margin:0;padding:0;border:0">Reisekosten Trainer <small style="font-weight:400;color:var(--ui-muted)">· 1:1 nach Aufwand</small></div>
@@ -476,7 +476,7 @@ const PREIS = {
   tagessatz: 2190, halberTag: 1390, maxPersonenSchulung: 6,   // Kategorie 1 (Tagessatz ohne Vorbereitung)
   inhouse: { online: 3500, standort: 3500, kunde: 4200 },    // Kategorie 2 (wie auf ppedv.de)
   maxPersonenInhouse: 10, rabattCode: "bestandskunde20", rabatt: 0.20,
-  kompetenzKurs: 3500, kompetenzKursBestand: 2800,         // Kategorie 3 (wie in der Kompetenzmatrix)
+  kompetenzKurs: 3500, kompetenzKursBestand: 2800,         // Kategorie 3: je Schulungstag (Bestandskunde 2.800 €)
   wiederholRabatt: 0.20,                                    // jeder weitere Durchgang ab 11 Teilnehmern
   aufpreisPersonTag: 250                                    // Ausnahme: 1–2 Personen über 10, je Person und Tag
 };
@@ -686,6 +686,14 @@ function angebotAusMatrix(d, alt){
 function ungendern(t){ return String(t).replace(/Teilnehmende(n?)/g,"Teilnehmer").replace(/Mitarbeitende(n?)/g,"Mitarbeiter"); }
 // Kurstage aus der Dauer („2 Tage“, „1 Tag“, „90 Min.“ → 1)
 function kurstage(t){ const m=String(t||"").match(/(\d+)\s*Tag/); return m ? Math.max(1,+m[1]) : 1; }
+// Schulungstage für den Preis: „5 Tage“ → 5; Kurse bis 4 Stunden („90 Min.“, „3 Stunden“) → halber Tag
+function schulungstage(t){
+  const s=String(t||""), tag=s.match(/(\d+)\s*Tag/), min=s.match(/(\d+)\s*Min/), std=s.match(/(\d+)\s*(Std|Stunde)/);
+  if(tag) return Math.max(1,+tag[1]);
+  const h = min ? +min[1]/60 : std ? +std[1] : 8;
+  return h<=4 ? 0.5 : 1;
+}
+function schulungstageGesamt(s){ return s.matrix ? s.matrix.kurse.reduce((x,c)=>x+schulungstage(c.t),0) : 0; }
 // Übernachtungen des Trainers: Anreise am Vortag = eine Nacht je Kurstag, sonst Kurstage − 1
 function uebernachtungen(s){
   if(!s.matrix) return 0;
@@ -778,15 +786,21 @@ function calc(s){
   }
   let reise=0;
   if(s.kategorie==="kompetenz" && s.matrix && s.matrix.kurse.length){
+    // Preis je Schulungstag: Kursdauer laut ppedv-Kursprogramm (z. B. Power-Woche = 5 Tage)
     const n=s.matrix.kurse.length, p=num(sch.preis), v=vorOrtTermine(s), a=num(r.proTermin);
+    const T=schulungstageGesamt(s);
     const extra=s.matrix.kurse.reduce((x,c)=>x+durchgaenge(c.tn)-1,0);
-    base=n*p;
-    pos.push({bez:n+" "+(n==1?"Kurs":"Kurse")+" laut Kursplan", txt:"je Kurs pauschal "+eur(p)+" für bis zu 10 Teilnehmer"+(s.matrix.bestand?" · Bestandskundenpreis":""), menge:n, preis:p});
+    const extraT=s.matrix.kurse.reduce((x,c)=>x+(durchgaenge(c.tn)-1)*schulungstage(c.t),0);
+    base=T*p;
+    pos.push({bez:n+" "+(n==1?"Kurs":"Kurse")+" laut Kursplan", txt:zahl(T)+" Schulungstage × "+eur(p)+" je Tag, je bis zu 10 Teilnehmer"+(s.matrix.bestand?" · Bestandskundenpreis":""), menge:T, preis:p});
     // Ersparnis gegenüber Normalpreis: Bestandskundenpreis + weitere Durchgänge (−20 % vom Normalpreis)
     const best = s.matrix.bestand && p<PREIS.kompetenzKurs, voll = best ? PREIS.kompetenzKurs : p, w=x=>Math.round(x*(1-PREIS.wiederholRabatt));
-    if(best) rabatte.push({t:"Bestandskundenpreis", b:n*(voll-p)+extra*(w(voll)-w(p))});
-    if(extra){ pos.push(weitereDurchgaenge(extra, p)); rabatte.push({t:"weitere Durchgänge −20 %", b:extra*(voll-w(voll))}); }
-    const pt=s.matrix.kurse.reduce((x,c)=>x+zusatzPersonen(c.tn)*kurstage(c.t),0);
+    if(best) rabatte.push({t:"Bestandskundenpreis", b:T*(voll-p)+extraT*(w(voll)-w(p))});
+    if(extra){
+      pos.push({bez:(extra==1?"Weiterer Durchgang":"Weitere Durchgänge")+" (−20 %)", txt:extra+" "+(extra==1?"Durchgang":"Durchgänge")+" mit "+zahl(extraT)+" Schulungstagen × "+eur(w(p))+" · ab 11 Teilnehmern je bis zu 10 Personen", menge:extraT, preis:w(p)});
+      rabatte.push({t:"weitere Durchgänge −20 %", b:extraT*(voll-w(voll))});
+    }
+    const pt=s.matrix.kurse.reduce((x,c)=>x+zusatzPersonen(c.tn)*schulungstage(c.t),0);
     if(pt) pos.push(aufpreisPosition(pt, pt+" Personentage × "+eur(PREIS.aufpreisPersonTag)+" · 1–2 Personen über 10 je Kurs, statt weiterem Durchgang"));
     // Reisekosten Trainer: Pauschale je Termin ODER km + Hotel ODER „nach Aufwand“ – immer als eigene Position
     if(v){
@@ -944,10 +958,10 @@ function render(){
   const chips = (kat==="oeffentlich" ? [dauer, "bis zu "+maxP+" Personen", sch.format==="online"?"online":sch.format==="kunde"?"bei Ihnen vor Ort":"ppedv-Standort "+sch.standort] : mx ? mxChips : []).concat(mx ? [] : lines(p.chips));
   const teaser = kat==="oeffentlich" ? dauer+" · bis zu "+maxP+" Personen · Tagessatz"
     : kat==="inhouse" ? (dg>1 ? dg+" Durchgänge à 1 Tag · je bis zu "+maxP+" Personen" : "1 Tag · bis zu "+maxP+" Personen · Festpreis für Ihr Team")
-    : mx ? mxN+" "+(mxN==1?"Kurs":"Kurse")+" × "+eur(num(sch.preis))+" · Zeitraum nach Vereinbarung"
+    : mx ? mxN+" "+(mxN==1?"Kurs":"Kurse")+" · "+zahl(schulungstageGesamt(S))+" Schulungstage × "+eur(num(sch.preis))+" · Zeitraum nach Vereinbarung"
     : chips.slice(0,2).join(" · ");
   const auto = (kat==="kompetenz"
-    ? (mx ? [["Zeitraum", "nach Vereinbarung"], ["Kurse", mxN+(mxV&&mxV<mxN?" (davon "+mxV+" vor Ort)":"")], ["Format", (MATRIX_FORMATE[mx.format]||"")+(mx.format!=="online"&&k.ort?" · bei Ihnen in "+k.ort:"")]].concat(mx.mitarbeitende?[["Mitarbeiter", String(mx.mitarbeitende)]]:[]) : [])
+    ? (mx ? [["Zeitraum", "nach Vereinbarung"], ["Kurse", mxN+" · "+zahl(schulungstageGesamt(S))+" Schulungstage"+(mxV&&mxV<mxN?" (davon "+mxV+" Termine vor Ort)":"")], ["Format", (MATRIX_FORMATE[mx.format]||"")+(mx.format!=="online"&&k.ort?" · bei Ihnen in "+k.ort:"")]].concat(mx.mitarbeitende?[["Mitarbeiter", String(mx.mitarbeitende)]]:[]) : [])
     : [["Dauer", kat==="oeffentlich"?dauer:dg>1?"1 Tag je Durchgang":"1 Tag"], ["Teilnehmer", persText], ["Format", formatText(S).replace(/^[ob]/,c=>c.toUpperCase())]])
     .concat([["Schulungszeiten", zeitenText(S)], ["Hardware", hardwareText(S)]]);
   const dt = S.details||{};
