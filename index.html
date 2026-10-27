@@ -205,7 +205,8 @@ table.plan td.pr small{display:block;font-size:6.6pt;color:var(--muted)}
 .sig .role{font-size:8.2pt;color:var(--muted)}
 .auftrag{margin-top:6mm;border:1px solid var(--line);border-radius:2.5mm;padding:3.5mm 5mm 3mm;break-inside:avoid}
 .auftrag p{margin:1.5mm 0 0;font-size:8.6pt}
-.auftrag .ulinien{display:grid;grid-template-columns:1fr 1.4fr 1.2fr;gap:6mm;margin-top:11mm}
+.auftrag .ulinien{display:grid;grid-template-columns:1fr 2fr;gap:10mm;margin-top:24mm}   /* viel Platz für Unterschrift und Stempel */
+.auftrag .ulinien.u2{margin-top:13mm}
 .auftrag .ulinien div{font-size:7.4pt;color:var(--muted)}
 .auftrag .ulinien span{display:block;border-top:1px solid var(--ink);margin-bottom:1mm}
 .auftrag .zurueck{font-size:7.4pt;color:var(--muted);margin-top:2.5mm}
@@ -1138,8 +1139,11 @@ function render(){
       <p>Hiermit beauftragen wir die ppedv AG gemäß diesem Angebot${nr?" Nr. "+esc(nr):""} vom ${esc(dfmt(a.datum))}${k.firma?" – "+esc(k.firma):""}.</p>
       <div class="ulinien">
         <div><span></span>Ort, Datum</div>
-        <div><span></span>Unterschrift und Firmenstempel</div>
+        <div><span></span>Unterschrift und Firmenstempel des Auftraggebers</div>
+      </div>
+      <div class="ulinien u2">
         <div><span></span>Name in Druckbuchstaben</div>
+        <div><span></span>Funktion</div>
       </div>
       <p class="zurueck">Bitte unterschrieben zurück an ${esc(S.absender.email||FIRMA.mail)}</p>
     </div>`;
