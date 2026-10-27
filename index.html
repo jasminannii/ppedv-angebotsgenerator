@@ -189,6 +189,9 @@ table.plan td em{font-style:normal;font-weight:400;font-size:6.8pt;color:var(--o
 table.plan td small{color:var(--muted)}
 table.plan .agl{font-weight:400;color:var(--muted);font-size:6.9pt;line-height:1.35;margin-top:.4mm}
 table.plan td:nth-child(3),table.plan td:nth-child(4){white-space:nowrap}
+table.plan .pr{text-align:right;white-space:nowrap;padding-right:0}
+table.plan td.pr b{color:var(--navy);font-weight:700}
+table.plan td.pr small{display:block;font-size:6.6pt;color:var(--muted)}
 
 .note{margin-top:3.5mm;background:var(--orange-soft);border-radius:2.5mm;padding:2.4mm 4mm;font-size:8.3pt}
 .note b{color:var(--navy)}
@@ -792,7 +795,7 @@ function calc(s){
     const extra=s.matrix.kurse.reduce((x,c)=>x+durchgaenge(c.tn)-1,0);
     const extraT=s.matrix.kurse.reduce((x,c)=>x+(durchgaenge(c.tn)-1)*schulungstage(c.t),0);
     base=T*p;
-    pos.push({bez:n+" "+(n==1?"Kurs":"Kurse")+" laut Kursplan", txt:zahl(T)+" Schulungstage × "+eur(p)+" je Tag, je bis zu 10 Teilnehmer"+(s.matrix.bestand?" · Bestandskundenpreis":""), menge:T, preis:p});
+    pos.push({bez:n+" "+(n==1?"Kurs":"Kurse")+" laut Kursplan", txt:zahl(T)+" Schulungstage × "+eur(p)+" je Tag, je bis zu 10 Teilnehmer"+(s.matrix.bestand?" · Bestandskundenpreis":"")+" · Preis je Kurs siehe Kursplan", menge:T, preis:p});
     // Ersparnis gegenüber Normalpreis: Bestandskundenpreis + weitere Durchgänge (−20 % vom Normalpreis)
     const best = s.matrix.bestand && p<PREIS.kompetenzKurs, voll = best ? PREIS.kompetenzKurs : p, w=x=>Math.round(x*(1-PREIS.wiederholRabatt));
     if(best) rabatte.push({t:"Bestandskundenpreis", b:T*(voll-p)+extraT*(w(voll)-w(p))});
@@ -974,13 +977,22 @@ function render(){
   // Kursplan mit Agenda je Kurs – bei vielen Kursen über mehrere Seiten
   const mitAgenda = mx && mx.kurse.some(c=>c.ag && c.ag.length);
   const proSeite = mitAgenda ? 12 : 18;
-  const kursZeile = (c,i)=>`<tr><td>${i+1}</td><td>${esc(c.n)}${c.pflicht?" <em>immer dabei</em>":""}${mitAgenda?`<div class="agl">${esc(c.ag&&c.ag.length?c.ag.join(" · "):"Inhalte laut Kursbeschreibung auf ppedv.de")}</div>`:""}</td><td>${esc(c.t||"")}</td><td>${esc(c.ort||"")}</td><td>${esc(c.team||"")}${c.tn?` <small>(${esc(c.tn)}${durchgaenge(c.tn)>1?" · "+durchgaenge(c.tn)+" Durchgänge":""}${zusatzPersonen(c.tn)?" · "+zusatzPersonen(c.tn)+" mit Aufpreis":""})</small>`:""}</td></tr>`;
+  const kursZeile = (c,i)=>`<tr><td>${i+1}</td><td>${esc(c.n)}${c.pflicht?" <em>immer dabei</em>":""}${mitAgenda?`<div class="agl">${esc(c.ag&&c.ag.length?c.ag.join(" · "):"Inhalte laut Kursbeschreibung auf ppedv.de")}</div>`:""}</td><td>${esc(c.t||"")}</td><td>${esc(c.ort||"")}</td><td>${esc(c.team||"")}${c.tn?` <small>(${esc(c.tn)}${durchgaenge(c.tn)>1?" · "+durchgaenge(c.tn)+" Durchgänge":""}${zusatzPersonen(c.tn)?" · "+zusatzPersonen(c.tn)+" mit Aufpreis":""})</small>`:""}</td><td class="pr">${kursPreisZelle(c)}</td></tr>`;
+  // Preis je Kurs im Kursplan: Tage × Tagessatz, weitere Durchgänge −20 %, Aufpreis – damit jeder Betrag nachvollziehbar ist
+  function kursPreisZelle(c){
+    const t=schulungstage(c.t), p=num(sch.preis), dg=durchgaenge(c.tn), zp=zusatzPersonen(c.tn), w=Math.round(p*(1-PREIS.wiederholRabatt));
+    const summe = t*p + (dg-1)*t*w + zp*t*PREIS.aufpreisPersonTag;
+    let h=`<b>${eur(summe)}</b><small>${zahl(t)} ${t==1?"Tag":"Tage"} × ${eur(p)}</small>`;
+    if(dg>1) h+=`<small>+ ${dg-1>1?(dg-1)+" weitere Durchgänge":"2. Durchgang"} ${eur((dg-1)*t*w)} (−20 %)</small>`;
+    if(zp) h+=`<small>+ Aufpreis ${zp} Pers. ${eur(zp*t*PREIS.aufpreisPersonTag)}</small>`;
+    return h;
+  }
   const planTeile = [];
   if(mx) for(let i=0;i<mxN;i+=proSeite) planTeile.push(`
     <div class="kicker">Ihr Kursplan${i?" (Fortsetzung)":""}</div>
     <h3 class="sec" style="margin-bottom:2.5mm">${i?"Kurse "+(i+1)+"–"+Math.min(mxN,i+proSeite):mxN+" "+(mxN==1?"Kurs":"Kurse")+" nach Priorität"}</h3>
     <table class="plan">
-      <tr><th>#</th><th>Kurs und Inhalte</th><th>Dauer</th><th>Ort</th><th>Team</th></tr>
+      <tr><th>#</th><th>Kurs und Inhalte</th><th>Dauer</th><th>Ort</th><th>Team</th><th class="pr">Preis netto</th></tr>
       ${mx.kurse.slice(i,i+proSeite).map((c,j)=>kursZeile(c,i+j)).join("")}
     </table>`);
   // Ablauf passt mit auf die letzte Kursplan-Seite, wenn dort wenig steht
