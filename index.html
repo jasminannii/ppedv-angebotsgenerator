@@ -539,11 +539,11 @@ Copilot - KI in Word, Excel, Outlook & Co.|1|https://ppedv.de/Schulung/Kurse/Mic
 Copilot für IT, Power-User und AI Champions|2|https://ppedv.de/Schulung/Kurse/CopilotM365AIAnwenderCoworkAgentNotebooksGPTClaudeTraining
 Copilot für M365 Admins - Sichere Einführung und Betrieb|1|https://ppedv.de/Schulung/Kurse/CopilotAdministrationMicrosoft365TrainingKuenstlicheIntelligenzSeminarSecurityWorkshop
 Copilot Studio und Power Platform AI - Agenten, Workflows, Automatisierung|3|https://ppedv.de/Schulung/Kurse/CopilotStudioAIAgentsPowerAppsPowerAutomateOnlineTraining
-EU AI Act und Umsetzung in Unternehmen|1|https://ppedv.de/Schulung/Kurse/EUAiAct
+EU AI Act und Umsetzung in Unternehmen|0.5|https://ppedv.de/Schulung/Kurse/EUAiAct
 GitHub Copilot und ChatGPT - besseren Code in kürzerer Zeit|2|https://ppedv.de/Schulung/Kurse/KuenstlicheIntelligenzSeminarSoftwareentwicklungGitHubCopilotlernenChatGPTprogrammierenNodejs
-KI im Marketing - Content, Kampagnen & Workflows|1|https://ppedv.de/schulung/kurse/KIMarketingBootcamp.aspx
+KI im Marketing - Content, Kampagnen & Workflows|0.5|https://ppedv.de/schulung/kurse/KIMarketingBootcamp.aspx
 PowerShell mit AI – Automatisierung für Clevere|1|https://ppedv.de/Schulung/Kurse/WindowsPowerShellAIAdministrationChatGPTSeminarKuenstlicheIntelligenzWeiterbildung
-Prompt like a pro - KI-Anweisungen für komplexe Aufgaben optimieren|1|https://ppedv.de/Schulung/Kurse/PromptEngineeringAnwenderSeminarKIAusbildung
+Prompt like a pro - KI-Anweisungen für komplexe Aufgaben optimieren|0.5|https://ppedv.de/Schulung/Kurse/PromptEngineeringAnwenderSeminarKIAusbildung
 Software verstehen im Zeitalter von Vibe Coding - Vom Blindflug zur Kontrolle|1|https://ppedv.de/Schulung/Kurse/SoftwareVerstehenImZeitalterVonVibeCoding-VomBlindflugZurKontrolle.aspx
 Power-Woche: SQL Server Abfragen|5|https://ppedv.de/schulung/kurse/SQL2012TransactSQLTSQLMOC10774SSMSAbfrageTuningOptimierungIndizesSeminarTrainingPowerwoche
 Power-Woche: SQL Server Administration|5|https://ppedv.de/schulung/kurse/SQLServer2012AdministrationSSMSSSDTPerformanceTuningOptimierungSeminarTrainingPowerwoche.aspx
@@ -782,7 +782,7 @@ function calc(s){
   let base=0;
   const rabatte=[];   // Ersparnisse für „Ihre Investition“
   if(s.kategorie==="oeffentlich"){
-    const {g,h}=tageKat1(sch), tp=num(sch.preis), hp=num(sch.preisHalb), bez="Schulung „"+(sch.kurs||"…")+"“";
+    const {g,h}=tageKat1(sch), tp=num(sch.preis), hp=(sch.preisHalb===""||sch.preisHalb==null)?PREIS.halberTag:num(sch.preisHalb), bez="Schulung „"+(sch.kurs||"…")+"“";
     base=g*tp+h*hp;
     if(g) pos.push({bez, txt:tageText(g)+" × Tagessatz "+eur(tp)+", bis "+PREIS.maxPersonenSchulung+" Personen", menge:g, preis:tp});
     if(h) pos.push({bez:g?"Schulung – halbe Tage":bez, txt:h+" × halber Tag à "+eur(hp)+", bis "+PREIS.maxPersonenSchulung+" Personen", menge:h, preis:hp});
@@ -967,7 +967,7 @@ function render(){
   const dg = kat==="inhouse" ? durchgaenge(pers) : 1;
   const zpI = kat==="inhouse" ? zusatzPersonen(pers) : 0;
   const persText = (dg>1 ? pers+" Personen in "+dg+" Durchgängen (je max. "+maxP+")"
-    : pers ? pers+" "+(pers==1?"Person":"Personen")+(zpI?"":" (max. "+maxP+")") : "bis zu "+maxP+" Personen")
+    : pers ? pers+" "+(pers==1?"Person":"Personen")+(zpI||pers>maxP?"":" (max. "+maxP+")") : "bis zu "+maxP+" Personen")
     + (zpI ? " – davon "+zpI+" mit Aufpreis" : "");
   const kurs = kursInfo(sch.kurs);
   // Kategorie 1: Titel, Betreff, Eckdaten und Link ergeben sich aus dem gewählten Kurs
@@ -1164,9 +1164,10 @@ function syncForm(base, reise, netto, pers, maxP){
   document.getElementById("reiseBox").hidden = !reiseAktiv(S);
 
   // Inhouse: mehr als 10 Personen = mehrere Durchgänge (Hinweis, kein Fehler)
-  const mehrfach = kat==="inhouse" && pers>maxP, zuViel = pers>maxP && !mehrfach;
+  // mehr als max. Personen: Inhouse = mehrere Durchgänge; öffentliche Schulung = nur Hinweis, kein Muss
+  const mehrfach = kat==="inhouse" && pers>maxP, zuViel = false, ueberMax = kat==="oeffentlich" && pers>maxP;
   const ph=document.getElementById("persHint");
-  ph.textContent = zuViel ? "Achtung: Der Tagessatz gilt für maximal "+maxP+" Personen."
+  ph.textContent = ueberMax ? "Hinweis: Der Tagessatz ist für bis zu "+maxP+" Personen gedacht – bei "+pers+" Personen Preis ggf. anpassen."
     : mehrfach && zusatzPersonen(pers) ? (durchgaenge(pers)>1?durchgaenge(pers)+" Durchgänge, ":"")+zusatzPersonen(pers)+" "+(zusatzPersonen(pers)==1?"Person":"Personen")+" mit Aufpreis "+eur(PREIS.aufpreisPersonTag)+" je Tag."
     : mehrfach ? durchgaenge(pers)+" Durchgänge à max. "+maxP+" Personen – jeder weitere Durchgang −20 %."
     : (kat==="oeffentlich" ? "Tagessatz gilt für bis zu "+maxP+" Personen." : "");
@@ -1246,7 +1247,7 @@ document.getElementById("form").addEventListener("input", e=>{
   // Details selbst bearbeitet → nicht mehr automatisch überschreiben (leeres Feld = wieder automatisch)
   if(/^details\.(technik|vorkenntnisse|voraussetzungen)$/.test(el.dataset.k)){ const d=S.details, k=el.dataset.k.split(".")[1]; (d._manual||(d._manual={}))[k]=el.value.trim()!==""; }
   // Kurs aus der Liste gewählt → Dauer übernehmen
-  if(el.dataset.k==="schulung.kurs"){ const ki=kursInfo(el.value); if(ki){ S.schulung.tage=ki.tage; S.schulung.halbeTage=0; fillForm(); } }
+  if(el.dataset.k==="schulung.kurs"){ const ki=kursInfo(el.value); if(ki){ S.schulung.tage=ki.tage<1?0:ki.tage; S.schulung.halbeTage=ki.tage<1?1:0; fillForm(); } }
   if(el.dataset.k==="schulung.personen") fillForm();   // beide Teilnehmer-Felder synchron halten
   if(el.dataset.k==="schulung.format"){ S.schulung.preis=defaultPreis(S); fillForm(); }   // Standardpreis des Formats vorauswählen
   render();
@@ -1274,7 +1275,7 @@ document.getElementById("mxBestand").onchange = e=>{
   S.matrix.bestand = e.target.checked; S.schulung.preis = defaultPreis(S); fillForm(); render();
 };
 document.querySelectorAll("[data-kat]").forEach(b=>b.addEventListener("click",()=>{ applyKategorie(S,b.dataset.kat); fillForm(); render(); }));
-document.getElementById("kursliste").innerHTML = KURSE.map(k=>`<option value="${esc(k.name)}">${tageText(k.tage)}</option>`).join("");
+document.getElementById("kursliste").innerHTML = KURSE.map(k=>`<option value="${esc(k.name)}">${k.tage<1?"½ Tag":tageText(k.tage)}</option>`).join("");
 document.getElementById("bPrint").onclick = ()=>{
   if(!angebotsNr(S) && !confirm("Es ist keine Kunden-/Angebotsnummer eingetragen.\nTrotzdem PDF erstellen?")){ document.getElementById("nrInput").focus(); return; }
   window.print();
