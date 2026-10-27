@@ -8,7 +8,7 @@ A4-Vorschau; „PDF erstellen“ → im Druckdialog „Als PDF speichern“.
 1. **Öffentliche Schulung** – Kurs aus dem ppedv-Programm, Tagessatz 2.190 € (halber Tag 1.390 €, ohne Vorbereitung) für bis zu
    6 Personen, ganze und halbe Tage, online, ppedv-Standort oder beim Kunden vor Ort; optional Vorbereitung (halbe Dauer ×
    Tagessatz); Reisekosten Trainer 1:1 (0,60 €/km, Hotel ca. 90 €).
-2. **Inhouse-Workshop A/B** – KI-Abläufe oder Copilot-Praxistag: online/Standort 3.500 €,
+2. **Inhouse** – A KI-Abläufe / B Copilot-Praxistag (Workshop, 1 Tag): online/Standort 3.500 €, **C beliebiger Kurs aus dem Programm: 3.500 € je Schulungstag** (Dauer aus der Kursliste);
    beim Kunden 4.200 €; Rabattcode `bestandskunde20` = −20 % auf die Pauschale (nicht auf die Anreise).
 3. **Kompetenzmodell** – Preis **je Schulungstag** laut ppedv-Kursdauer: 3.500 € (Bestandskunde 2.800 €), z. B. Power-Woche 5 Tage = 17.500 €; Kurse bis 4 Std. = halber Tag. Kommt aus der Kompetenzmatrix
    (https://ppedv-kompetenzmatrix.vercel.app, Abschluss → „Link für Angebotsgenerator“; Bestandskunde per Häkchen hier).

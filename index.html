@@ -253,10 +253,11 @@ table.plan td.pr small{display:block;font-size:6.6pt;color:var(--muted)}
           <button data-kat="kompetenz"><b>Kompetenzmodell</b><span>Projekt über mehrere Monate</span></button>
         </div>
         <div data-cat="inhouse">
-          <div class="sub">Welcher Workshop?</div>
+          <div class="sub">Welche Inhouse-Schulung?</div>
           <div class="preset">
-            <button data-preset="A"><b>A · KI-Abläufe</b><span>KI-Skills ohne Programmierung</span></button>
-            <button data-preset="B"><b>B · Copilot-Praxistag</b><span>Copilot & Prozessautomatisierung</span></button>
+            <button data-preset="A"><b>A · KI-Abläufe</b><span>Workshop, 1 Tag</span></button>
+            <button data-preset="B"><b>B · Copilot-Praxistag</b><span>Workshop, 1 Tag</span></button>
+            <button data-preset="K"><b>C · Kurs</b><span>aus dem Programm</span></button>
           </div>
         </div>
       </details>
@@ -291,12 +292,12 @@ table.plan td.pr small{display:block;font-size:6.6pt;color:var(--muted)}
       <details open class="fs">
         <summary><i class="n">4</i>Leistung & Preis<span class="sv" id="svPreis"></span></summary>
 
-        <div data-cat="oeffentlich">
+        <div data-cat="oeffentlich inhouse" class="nurKurs">
           <label>Kurs <small>(aus der Liste wählen oder frei eintragen)</small></label><input data-k="schulung.kurs" list="kursliste" autocomplete="off" placeholder="Kursname eingeben …">
           <datalist id="kursliste"></datalist>
         </div>
         <div data-cat="oeffentlich inhouse">
-          <div class="row" data-cat="oeffentlich">
+          <div class="row nurKurs" data-cat="oeffentlich inhouse">
             <div><label>Ganze Tage <small>(09.00–17.00)</small></label><input type="number" min="0" data-k="schulung.tage"></div>
             <div><label>Halbe Tage <small>(3,5 Std.)</small></label><input type="number" min="0" data-k="schulung.halbeTage"></div>
           </div>
@@ -471,13 +472,23 @@ const PRESETS = {
     },
     leistung: "Praxistag „Copilot & Prozessautomatisierung“",
     positionen: ""
+  },
+  // C: beliebiger Kurs aus dem ppedv-Programm als Inhouse-Schulung (Titel, Dauer, Link aus der Kursliste)
+  K: {
+    angebot: { betreff: "" },
+    produkt: { eyebrow: "Inhouse-Schulung · ppedv Kursprogramm", titel: "",
+      untertitel: "Praxisnahe Schulung mit erfahrenen ppedv-Trainern – exklusiv für Ihr Team, live online, an einem ppedv-Standort oder bei Ihnen vor Ort.",
+      chips: "", nutzenTitel: "", nutzen: "", stepsIntro: "", steps: "", takeaways: "", zielgruppe: "", hinweis: "", link: "" },
+    leistung: "Inhouse-Schulung",
+    positionen: ""
   }
 };
 
 // ---------- Preislogik ----------
 const PREIS = {
   tagessatz: 2190, halberTag: 1390, maxPersonenSchulung: 6,   // Kategorie 1 (Tagessatz ohne Vorbereitung)
-  inhouse: { online: 3500, standort: 3500, kunde: 4200 },    // Kategorie 2 (wie auf ppedv.de)
+  inhouse: { online: 3500, standort: 3500, kunde: 4200 },    // Kategorie 2, Workshops A/B (wie auf ppedv.de)
+  inhouseTag: 3500,                                         // Kategorie 2, C · Kurs: je Schulungstag
   maxPersonenInhouse: 10, rabattCode: "bestandskunde20", rabatt: 0.20,
   kompetenzKurs: 3500, kompetenzKursBestand: 2800,         // Kategorie 3: je Schulungstag (Bestandskunde 2.800 €)
   wiederholRabatt: 0.20,                                    // jeder weitere Durchgang ab 11 Teilnehmern
@@ -637,7 +648,7 @@ function applyKategorie(s,kat){
 // Vorausgewählter Preis je Kategorie bzw. Format – im Formular überschreibbar
 function defaultPreis(s){
   if(s.kategorie==="oeffentlich") return PREIS.tagessatz;
-  if(s.kategorie==="inhouse") return PREIS.inhouse[s.schulung.format]||PREIS.inhouse.online;
+  if(s.kategorie==="inhouse") return s.preset==="K" ? PREIS.inhouseTag : (PREIS.inhouse[s.schulung.format]||PREIS.inhouse.online);
   if(s.kategorie==="kompetenz") return s.matrix && s.matrix.bestand ? PREIS.kompetenzKursBestand : PREIS.kompetenzKurs;
   return "";
 }
@@ -779,12 +790,21 @@ function calc(s){
     if(sch.vorbereitung){ const v=(g+h/2)/2; pos.push({bez:"Vorbereitung Trainer", txt:zahl(v)+" "+(v==1?"Tag":"Tage")+" (halbe Schulungsdauer) × Tagessatz "+eur(tp), menge:v, preis:tp}); }
   }
   if(s.kategorie==="inhouse"){
-    base=num(sch.preis);
+    // A/B: Workshop-Pauschale für 1 Tag · C (K): beliebiger Kurs, Preis je Schulungstag (halber Tag = halber Preis)
+    const kurs = s.preset==="K", {g,h}=tageKat1(sch), tage = kurs ? g+h/2 : 1, tp=num(sch.preis);
+    base = tp*tage;
     const d=durchgaenge(sch.personen);
-    pos.push({bez:PRESETS[s.preset].leistung, txt:"1 Tag, bis "+PREIS.maxPersonenInhouse+" Personen, inkl. Vorbereitung", menge:1, preis:base});
-    if(d>1){ pos.push(weitereDurchgaenge(d-1, base)); rabatte.push({t:"weitere Durchgänge −20 %", b:(d-1)*(base-Math.round(base*(1-PREIS.wiederholRabatt)))}); }
+    pos.push(kurs
+      ? {bez:"Inhouse-Schulung „"+(sch.kurs||"…")+"“", txt:dauerText(g,h)+" × "+eur(tp)+" je Tag, bis "+PREIS.maxPersonenInhouse+" Personen", menge:tage, preis:tp}
+      : {bez:PRESETS[s.preset].leistung, txt:"1 Tag, bis "+PREIS.maxPersonenInhouse+" Personen, inkl. Vorbereitung", menge:1, preis:base});
+    if(d>1){
+      const w=Math.round(tp*(1-PREIS.wiederholRabatt));
+      pos.push(kurs ? {bez:(d-1==1?"Weiterer Durchgang":"Weitere Durchgänge")+" (−20 %)", txt:(d-1)+" × "+zahl(tage)+" "+(tage==1?"Tag":"Tage")+" × "+eur(w)+" · ab 11 Teilnehmern je bis zu 10 Personen", menge:(d-1)*tage, preis:w}
+                    : weitereDurchgaenge(d-1, base));
+      rabatte.push({t:"weitere Durchgänge −20 %", b:(d-1)*tage*(tp-w)});
+    }
     const zp=zusatzPersonen(sch.personen);
-    if(zp) pos.push(aufpreisPosition(zp, zp+" "+(zp==1?"Person":"Personen")+" × "+eur(PREIS.aufpreisPersonTag)+" × 1 Tag · statt weiterem Durchgang"));
+    if(zp) pos.push(aufpreisPosition(zp*tage, zp+" "+(zp==1?"Person":"Personen")+" × "+eur(PREIS.aufpreisPersonTag)+" × "+zahl(tage)+" "+(tage==1?"Tag":"Tage")+" · statt weiterem Durchgang"));
     if(rabattOk(s)){ pos.push({bez:"Rabatt Bestandskunde (−20 %)", txt:"auf die Pauschale des ersten Durchgangs", menge:1, preis:-Math.round(base*PREIS.rabatt)}); rabatte.push({t:"Bestandskunde −20 %", b:Math.round(base*PREIS.rabatt)}); }
   }
   let reise=0;
@@ -906,11 +926,11 @@ function detailVorschlag(s){
   } else if(s.kategorie==="oeffentlich" && s.schulung.kurs){
     kurse=[s.schulung.kurs]; online=s.schulung.format==="online"; vorOrt=!online;
   } else if(s.kategorie==="inhouse"){
-    kurse=[s.preset==="B"?"Copilot Praxistag":"Workshop KI-Abläufe"]; online=s.schulung.format==="online"; vorOrt=!online;
+    kurse=[s.preset==="K"?(s.schulung.kurs||""):s.preset==="B"?"Copilot Praxistag":"Workshop KI-Abläufe"]; online=s.schulung.format==="online"; vorOrt=!online;
     extraTechnik = s.preset==="B" ? ["Microsoft 365 Copilot","Copilot Studio","SharePoint","Power Automate"] : [];
   } else return null;
   const technik=[...new Set(extraTechnik.concat(TECHNIK.filter(([re])=>kurse.some(n=>re.test(n))).map(t=>t[1])))];
-  if(s.kategorie==="inhouse" && s.preset!=="B") technik.push("KI-Assistent nach Wahl (z. B. Microsoft 365 Copilot)");
+  if(s.kategorie==="inhouse" && s.preset==="A") technik.push("KI-Assistent nach Wahl (z. B. Microsoft 365 Copilot)");
   if(kurse.some(n=>/Skill-Building/.test(n)) && !technik.some(t=>/Copilot/.test(t))) technik.push("KI-Assistent nach Wahl");
   const ein=kurse.filter(n=>EINSTIEG.test(n)).length;
   const vorkenntnisse = ein===kurse.length ? "keine besonderen Vorkenntnisse nötig"
@@ -951,21 +971,23 @@ function render(){
     + (zpI ? " – davon "+zpI+" mit Aufpreis" : "");
   const kurs = kursInfo(sch.kurs);
   // Kategorie 1: Titel, Betreff, Eckdaten und Link ergeben sich aus dem gewählten Kurs
-  const titel = p.titel || (kat==="oeffentlich" ? (sch.kurs||"Schulung") : "");
-  const betreff = a.betreff || (kat==="oeffentlich" ? "Ihr Angebot: Schulung „"+(sch.kurs||"…")+"“" : "");
-  const link = p.link || (kat==="oeffentlich" && kurs ? kurs.url : kat==="inhouse" && PRESETS[S.preset] ? PRESETS[S.preset].produkt.link : "");
+  const mitKurs = kat==="oeffentlich" || (kat==="inhouse" && S.preset==="K");   // Kurs aus dem Programm
+  const titel = p.titel || (mitKurs ? (sch.kurs||"Schulung") : "");
+  const betreff = a.betreff || (mitKurs ? "Ihr Angebot: "+(kat==="inhouse"?"Inhouse-Schulung":"Schulung")+" „"+(sch.kurs||"…")+"“" : "");
+  const link = p.link || (mitKurs && kurs ? kurs.url : kat==="inhouse" && PRESETS[S.preset] ? PRESETS[S.preset].produkt.link : "");
   // Kategorie 3 mit Daten aus der Kompetenzmatrix
   const mx = kat==="kompetenz" && S.matrix && S.matrix.kurse.length ? S.matrix : null;
   const mxN = mx ? mx.kurse.length : 0, mxV = vorOrtTermine(S);
   const mxChips = mx ? [mxN+" "+(mxN==1?"Kurs":"Kurse"), MATRIX_FORMATE[mx.format]||"", mx.mitarbeitende?mx.mitarbeitende+" Mitarbeiter":""].filter(Boolean) : [];
-  const chips = (kat==="oeffentlich" ? [dauer, "bis zu "+maxP+" Personen", sch.format==="online"?"online":sch.format==="kunde"?"bei Ihnen vor Ort":"ppedv-Standort "+sch.standort] : mx ? mxChips : []).concat(mx ? [] : lines(p.chips));
+  const chips = (mitKurs ? [dauer, "bis zu "+maxP+" Personen", sch.format==="online"?"online":sch.format==="kunde"?"bei Ihnen vor Ort":"ppedv-Standort "+sch.standort] : mx ? mxChips : []).concat(mx ? [] : lines(p.chips));
   const teaser = kat==="oeffentlich" ? dauer+" · bis zu "+maxP+" Personen · Tagessatz"
+    : kat==="inhouse" && S.preset==="K" ? dauer+(dg>1?" · "+dg+" Durchgänge":"")+" · je bis zu "+maxP+" Personen · "+eur(num(sch.preis))+" je Tag"
     : kat==="inhouse" ? (dg>1 ? dg+" Durchgänge à 1 Tag · je bis zu "+maxP+" Personen" : "1 Tag · bis zu "+maxP+" Personen · Festpreis für Ihr Team")
     : mx ? mxN+" "+(mxN==1?"Kurs":"Kurse")+" · "+zahl(schulungstageGesamt(S))+" Schulungstage × "+eur(num(sch.preis))+" · Zeitraum nach Vereinbarung"
     : chips.slice(0,2).join(" · ");
   const auto = (kat==="kompetenz"
     ? (mx ? [["Zeitraum", "nach Vereinbarung"], ["Kurse", mxN+" · "+zahl(schulungstageGesamt(S))+" Schulungstage"+(mxV&&mxV<mxN?" (davon "+mxV+" Termine vor Ort)":"")], ["Format", (MATRIX_FORMATE[mx.format]||"")+(mx.format!=="online"&&k.ort?" · bei Ihnen in "+k.ort:"")]].concat(mx.mitarbeitende?[["Mitarbeiter", String(mx.mitarbeitende)]]:[]) : [])
-    : [["Dauer", kat==="oeffentlich"?dauer:dg>1?"1 Tag je Durchgang":"1 Tag"], ["Teilnehmer", persText], ["Format", formatText(S).replace(/^[ob]/,c=>c.toUpperCase())]])
+    : [["Dauer", kat==="oeffentlich"?dauer:S.preset==="K"?dauer+(dg>1?" je Durchgang":""):dg>1?"1 Tag je Durchgang":"1 Tag"], ["Teilnehmer", persText], ["Format", formatText(S).replace(/^[ob]/,c=>c.toUpperCase())]])
     .concat([["Schulungszeiten", zeitenText(S)], ["Hardware", hardwareText(S)]]);
   const dt = S.details||{};
   const details = [["Technologien",dt.technik],["Vorkenntnisse",dt.vorkenntnisse],["Voraussetzungen",dt.voraussetzungen],["Unterlagen",dt.unterlagen]].filter(r=>String(r[1]||"").trim());
@@ -1135,6 +1157,8 @@ function syncForm(base, reise, netto, pers, maxP){
   });
   document.querySelectorAll("[data-kat]").forEach(b=>b.classList.toggle("on", b.dataset.kat===kat));
   document.querySelectorAll("[data-preset]").forEach(b=>b.classList.toggle("on", b.dataset.preset===S.preset));
+  // Kursfelder (Kurs, Tage) bei Inhouse nur für „C · Kurs aus dem Programm“
+  if(kat==="inhouse" && S.preset!=="K") document.querySelectorAll(".nurKurs").forEach(el=>{ el.hidden=true; el.querySelectorAll("input").forEach(i=>i.disabled=true); });
   document.querySelectorAll("[data-fmt]").forEach(b=>{ b.classList.toggle("on", b.dataset.fmt===sch.format); });
   document.getElementById("standortWrap").hidden = sch.format!=="standort";
   document.getElementById("reiseBox").hidden = !reiseAktiv(S);
@@ -1154,7 +1178,7 @@ function syncForm(base, reise, netto, pers, maxP){
   rh.className = "hint"+(code?(rabattOk(S)?" ok":" need"):"");
 
   const std=defaultPreis(S), pl=document.getElementById("preisLabel"), phi=document.getElementById("preisHint");
-  pl.textContent = kat==="oeffentlich" ? "Tagessatz (€ netto)" : "Workshop-Pauschale (€ netto)";
+  pl.textContent = kat==="oeffentlich" ? "Tagessatz (€ netto)" : S.preset==="K" ? "Preis je Schulungstag (€ netto)" : "Workshop-Pauschale (€ netto)";
   phi.textContent = num(sch.preis)===num(std) ? "" : "Preis angepasst (Standard: "+eur(num(std))+").";
   phi.className = "hint need";
 
@@ -1227,7 +1251,7 @@ document.getElementById("form").addEventListener("input", e=>{
   if(el.dataset.k==="schulung.format"){ S.schulung.preis=defaultPreis(S); fillForm(); }   // Standardpreis des Formats vorauswählen
   render();
 });
-document.querySelectorAll("[data-preset]").forEach(b=>b.addEventListener("click",()=>{ applyPreset(S,b.dataset.preset); fillForm(); render(); }));
+document.querySelectorAll("[data-preset]").forEach(b=>b.addEventListener("click",()=>{ applyPreset(S,b.dataset.preset); S.schulung.preis=defaultPreis(S); fillForm(); render(); }));
 document.querySelectorAll("[data-fmt]").forEach(b=>b.addEventListener("click",()=>{ S.schulung.format=b.dataset.fmt; S.schulung.preis=defaultPreis(S); fillForm(); render(); }));
 const abSelect = document.getElementById("abSelect");
 abSelect.innerHTML = ANSPRECHPARTNER.map(a=>`<option value="${esc(a.name)}">${esc([a.name, a.rolle].filter(Boolean).join(" · "))}</option>`).join("");
