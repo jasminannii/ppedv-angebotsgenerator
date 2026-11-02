@@ -22,6 +22,21 @@ Der lokale Powerdialer öffnet `<Generator-Adresse>/#lead=<base64url(JSON)>` mit
 Daraus entsteht ein neues Inhouse-Angebot. Lesen: `leseLead()` / `angebotAusLead()`.
 Die Daten stehen hinter dem `#` und gehen an keinen Server.
 
+## Übernahme aus Nina
+
+Nina hat keine Schnittstelle (Blazor Server, Login über Microsoft). Darum: Lesezeichen „Nina → Angebot“
+(`ninaLesezeichen()`, einmalig aus Schritt 2 in die Lesezeichenleiste ziehen).
+
+1. Im Generator Nummer eintragen → „Aus Nina holen“ (oder Enter) öffnet die Ansprechpartner-Seite
+2. In Nina auf das Lesezeichen klicken → Ansprechpartner, Firma, Adresse, Land, UID (aus der Bemerkung) und
+   Betreuer (grüner Bearbeiter = „Ihr Kontakt“) stehen im Angebot
+
+Die Kartennummer ist die Ansprechpartner-ID + 3 Ziffern (92492156 → ID 92492, `ninaId()`). Die Daten gehen per
+`postMessage` an den offenen Generator oder hinter dem `#nina=` an einen neuen, nie an einen Server. Wird die Nummer
+geändert und die Kundendaten sind noch die alten, erscheint ein Hinweis und eine Rückfrage vor dem PDF.
+Ändert das Nina-Team die Feldnamen (`VM.Name1` usw.), muss das Lesezeichen angepasst werden.
+Die saubere Lösung bleibt die Schnittstelle in `docs/nina-schnittstelle.md`.
+
 ## Übergabe aus der Kompetenzmatrix
 
 Die Matrix öffnet `<Generator-Adresse>/#matrix=<base64url(JSON)>`. Die Daten stehen hinter dem `#`
@@ -57,7 +72,8 @@ Dateiname immer `ANG-<Angebots-Nr.>_<Unternehmen>`; die Angebotsnummer ist die *
 - Kompetenzmodell: Zeitraum nach Vereinbarung (keine Wochenangaben im Angebot)
 - Mehr als 10 Teilnehmer (Inhouse, Kompetenzmodell je Kurs): Kurs wird mehrfach gebucht, jeder weitere Durchgang −20 %; jeder Vor-Ort-Durchgang zählt als eigener Anreise-Termin
 - Kompetenzmodell-Reisekosten: km je Termin × 0,60 € + Hotel ca. 90 € (Anreise am Vortag = 1 Nacht je Kurstag, sonst Kurstage − 1) oder Pauschale je Termin; ohne Angaben steht „nach Aufwand“ als eigene Position
-- Kursplan mit Agenda je Kurs (aus der Matrix), 12 Kurse je Seite; Hardware-Zeile und optionale Zusatzleistungen (VMs 29 €/Person/Tag) wie in der ppedv-Vorlage
+- **Jedes Angebot hat 2 Seiten:** `render()` misst und rückt stufenweise zusammen (`.eng`, ohne Modulliste im Kursplan, `.eng2`); Kompetenzmodell: Ablauf und Rahmendaten auf Seite 1. Erst ab ca. 21 Kursen läuft der Kursplan über eine eigene Seite
+- Kursplan mit Agenda je Kurs (aus der Matrix), solange der Platz reicht; Hardware-Zeile und optionale Zusatzleistungen (VMs 29 €/Person/Tag) wie in der ppedv-Vorlage
 - Mehr als 10 Teilnehmer, aber nur 1–2 Personen darüber: per Häkchen Aufpreis 250 € je Person und Tag statt weiterem Durchgang (Ausnahme)
 - Ansprechpartner bei ppedv: feste Auswahl (`ANSPRECHPARTNER`), Auswahl merkt sich der Browser
 - „Ihre Investition“ zeigt Rabatte: durchgestrichener Normalpreis + „Sie sparen …“

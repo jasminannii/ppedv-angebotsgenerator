@@ -172,6 +172,8 @@ h3.sec{font-size:11.2pt;color:var(--navy);margin:4.5mm 0 1mm;font-weight:700;let
 dl.facts{margin:0;display:grid;grid-template-columns:22mm 1fr;font-size:8.3pt}
 dl.facts dt{color:var(--muted);padding:.75mm 0;border-bottom:1px solid var(--line)}
 dl.facts dd{margin:0;padding:.75mm 0;border-bottom:1px solid var(--line)}
+dl.facts.breit{grid-template-columns:22mm 1fr 22mm 1fr;margin-top:1mm}
+dl.facts.breit dd{padding-right:4mm}
 table.price{width:100%;border-collapse:collapse;font-size:8.5pt}
 table.price th{text-align:left;font-weight:600;color:var(--muted);font-size:7.4pt;text-transform:uppercase;letter-spacing:.06em;border-bottom:1.5px solid var(--navy);padding:1.3mm 0}
 table.price td{padding:1.3mm 0;border-bottom:1px solid var(--line);vertical-align:top}
@@ -199,17 +201,17 @@ table.plan td.pr small{display:block;font-size:6.6pt;color:var(--muted)}
 .cond a,.link a{color:var(--navy2)}
 .link{font-size:8.2pt;margin-top:1.5mm}
 
-.close{margin-top:3.5mm}
+.schluss{margin-top:3.5mm;display:grid;grid-template-columns:52mm 1fr;gap:5mm;align-items:start;break-inside:avoid}
 .sig p{margin:0 0 1mm}
 .sig .name{margin-top:3mm;color:var(--navy);font-weight:700;font-size:10pt}
 .sig .role{font-size:8.2pt;color:var(--muted)}
-.auftrag{margin-top:6mm;border:1px solid var(--line);border-radius:2.5mm;padding:3.5mm 5mm 3mm;break-inside:avoid}
-.auftrag p{margin:1.5mm 0 0;font-size:8.6pt}
-.auftrag .ulinien{display:grid;grid-template-columns:1fr 2fr;gap:10mm;margin-top:24mm}   /* viel Platz für Unterschrift und Stempel */
-.auftrag .ulinien.u2{margin-top:13mm}
-.auftrag .ulinien div{font-size:7.4pt;color:var(--muted)}
-.auftrag .ulinien span{display:block;border-top:1px solid var(--ink);margin-bottom:1mm}
-.auftrag .zurueck{font-size:7.4pt;color:var(--muted);margin-top:2.5mm}
+.auftrag{border:1px solid var(--line);border-radius:2.5mm;padding:2.5mm 4mm}
+.auftrag p{margin:1mm 0 0;font-size:8.2pt;line-height:1.3}
+.auftrag .ulinien{display:grid;grid-template-columns:1fr 2fr;gap:6mm;margin-top:17mm}   /* Platz für Unterschrift und Stempel */
+.auftrag .ulinien.u2{margin-top:8mm}
+.auftrag .ulinien div{font-size:7pt;color:var(--muted)}
+.auftrag .ulinien span{display:block;border-top:1px solid var(--ink);margin-bottom:.8mm}
+.auftrag .zurueck{font-size:7pt;color:var(--muted);margin-top:1.5mm}
 .flow{margin-top:3.5mm;display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:3mm;align-items:center}
 .flow-t{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;color:var(--orange);font-weight:700;width:22mm;line-height:1.3}
 .flow>div:not(.flow-t){display:flex;gap:2mm;align-items:flex-start;font-size:7.9pt;color:var(--muted)}
@@ -218,6 +220,44 @@ table.plan td.pr small{display:block;font-size:6.6pt;color:var(--muted)}
 
 
 
+
+/* Passt das Angebot nicht auf 2 Seiten, rückt render() es stufenweise enger zusammen */
+.eng .addr{margin-top:5mm}
+.eng .hero{margin-top:4mm;padding:3.8mm 6mm 3.5mm}
+.eng .hero h2{font-size:15pt;margin:1mm 0 1.2mm}
+.eng .hero p{font-size:8.5pt}
+.eng .chips{margin-top:2.2mm}
+.eng .letter{margin-top:3.5mm}
+.eng .kicker{margin-top:3mm}
+.eng h3.sec{font-size:10.4pt}
+.eng .sec-sub{margin-bottom:1.5mm;font-size:8.2pt}
+.eng .ps{gap:1.2mm}
+.eng .steps{gap:1.5mm}
+.eng .step{padding:1.5mm 2.6mm;grid-template-columns:6.5mm 1fr;gap:1.5mm}
+.eng .step .n{width:6mm;height:6mm;font-size:8pt}
+.eng .step b{font-size:8.7pt;margin:0}
+.eng .step span{font-size:7.9pt;line-height:1.28;display:block}
+.eng .target{margin-top:1.5mm;font-size:8pt}
+.eng dl.facts{font-size:7.9pt;line-height:1.3}
+.eng dl.facts dt,.eng dl.facts dd{padding:.45mm 0}
+.eng table.price{font-size:8.1pt;line-height:1.3}
+.eng table.price td{padding:.8mm 0}
+.eng table.price td small{font-size:7.2pt}
+.eng .note{margin-top:2mm;padding:1.4mm 3mm;font-size:7.9pt;line-height:1.3}
+.eng .cond{margin-top:1.8mm;font-size:7.3pt;line-height:1.3}
+.eng .schluss{margin-top:2.2mm}
+.eng2 .page{line-height:1.3}
+.eng2 .hero h2{font-size:13.5pt}
+.eng2 .letter p{margin-bottom:1.2mm}
+.eng2 .price-teaser{margin-top:2.5mm;padding:1.8mm 4mm}
+.eng2 .flow{margin-top:2.2mm}
+.eng2 table.plan{font-size:7.4pt;line-height:1.22}
+.eng2 table.plan td{padding:.45mm 2mm .45mm 0}
+.eng2 table.plan td.pr small.rech{display:none}
+.eng2 .auftrag .ulinien{margin-top:13mm}
+.eng2 .auftrag .ulinien.u2{margin-top:6.5mm}
+.eng2 dl.facts dt,.eng2 dl.facts dd{padding:.25mm 0}
+.eng2 table.price td{padding:.5mm 0}
 
 /* ---------- Print ---------- */
 @page{size:A4;margin:0}
@@ -271,7 +311,12 @@ table.plan td.pr small{display:block;font-size:6.6pt;color:var(--muted)}
 
       <details open class="fs nr-box">
         <summary><i class="n">2</i>Angebot<span class="sv" id="svNr"></span></summary>
-        <label>Ansprechpartner-ID aus Nina = Angebots-Nr. <small>(Pflichtfeld)</small></label><input data-k="kunde.kundennr" id="nrInput" placeholder="z. B. 86919" autocomplete="off">
+        <label>Ansprechpartner-ID oder Kartennummer aus Nina = Angebots-Nr. <small>(Pflichtfeld)</small></label>
+        <div style="display:flex;gap:6px"><input data-k="kunde.kundennr" id="nrInput" placeholder="z. B. 92492156" autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn2" id="ninaGo">Aus Nina holen</button></div>
+        <p class="hint need" id="ninaHint"></p>
+        <details style="margin-top:4px"><summary class="hint" style="cursor:pointer">Einmalig einrichten</summary>
+          <p class="hint"><a id="ninaBm" href="#" draggable="true" style="display:inline-block;background:var(--orange);color:#fff;border-radius:6px;padding:2px 8px;font-weight:600;text-decoration:none">Nina → Angebot</a> in die Lesezeichenleiste ziehen (Strg+Umschalt+B blendet sie ein). Danach: „Aus Nina holen“, dann in Nina auf das Lesezeichen klicken.</p>
+        </details>
         <p class="hint" id="nrHint"></p>
         <div class="row">
           <div style="grid-column:1/-1"><label>Ihr Kontakt bei ppedv</label><select id="abSelect"></select></div>
@@ -613,7 +658,7 @@ const KATEGORIEN = {
   },
   kompetenz: {
     betreff: "Ihr Angebot: Kompetenzmodell", personen: "",
-    brief: "vielen Dank für das angenehme Gespräch und Ihr Interesse an Wissensvermittlung. Wie besprochen erhalten Sie unser Angebot für ein Kompetenzmodell, mit dem Ihr Team über mehrere Monate gezielt Wissen aufbaut.\n\nAuf den folgenden Seiten finden Sie Ihren Kursplan, den Projektablauf, alle Rahmendaten und die Preisübersicht. Gerne stimmen wir Inhalte und Zeitplan vorab mit Ihnen ab.",
+    brief: "vielen Dank für das angenehme Gespräch und Ihr Interesse an Wissensvermittlung. Wie besprochen erhalten Sie unser Angebot für ein Kompetenzmodell, mit dem Ihr Team über mehrere Monate gezielt Wissen aufbaut.\n\nUnten und auf der folgenden Seite finden Sie den Projektablauf, alle Rahmendaten, Ihren Kursplan und die Preisübersicht. Gerne stimmen wir Inhalte und Zeitplan vorab mit Ihnen ab.",
     rahmen: "Zeitraum | nach Vereinbarung\nFormat | Inhouse-Workshops vor Ort und online\nZertifikat | digitales ppedv Teilnehmerzertifikat inklusive",
     positionen: "",
     produkt: { eyebrow: "Kompetenzmodell · Inhouse-Programm", titel: "Kompetenzen gezielt aufbauen – Schritt für Schritt.", untertitel: "Ein abgestimmtes Programm aus Inhouse-Workshops vor Ort und online, das Ihr Team über mehrere Monate begleitet.",
@@ -710,6 +755,53 @@ function leseLead(text){
   let d=null; try{ d = b64urlJson(m ? m[1] : ""); }catch(e){}
   if(!d || d.typ!=="ppedv-lead" || !d.kunde) throw new Error("Das ist kein Link aus dem Powerdialer.");
   return d;
+}
+// ---------- Übernahme aus Nina ----------
+// Nina hat keine Schnittstelle. Das Lesezeichen „Nina → Angebot“ läuft im angemeldeten Browser der Person auf der
+// Ansprechpartner-Seite, liest dort die Felder und schickt sie direkt an den Generator; es geht an keinen Server.
+const NINA = "https://nina.ppedv.de";
+const NINA_LAND = { A:"Österreich", AT:"Österreich", D:"Deutschland", DE:"Deutschland", CH:"Schweiz", FL:"Liechtenstein", LI:"Liechtenstein", L:"Luxemburg", LU:"Luxemburg", NL:"Niederlande", B:"Belgien", BE:"Belgien", I:"Italien", IT:"Italien", F:"Frankreich", FR:"Frankreich" };
+// Die Kartennummer in Nina ist die Ansprechpartner-ID + 3 Ziffern (92492156 → 92492)
+function ninaId(nr){ const z = String(nr||"").replace(/\D/g,""); return z.length>=8 ? z.slice(0,-3) : z; }
+function ausNina(d){
+  const k = S.kunde, t = x=>String(x||"").trim();
+  Object.assign(k, { firma:t(d.firma), anrede:d.anrede==="Herr"||d.anrede==="Frau"?d.anrede:"", vorname:t(d.vorname), nachname:t(d.nachname),
+    strasse:t(d.strasse), plz:t(d.plz), ort:t(d.ort), land:NINA_LAND[t(d.land).toUpperCase()]||"Deutschland", uid:t(d.uid), email:t(d.email) });
+  if(ninaId(k.kundennr)!==t(d.id)) k.kundennr = t(d.id);
+  k.quelleNr = null;
+  // Betreuer in Nina (grün markierter Bearbeiter) wird „Ihr Kontakt“, wenn er in der festen Auswahl steht
+  const ap = t(d.betreuer) && ANSPRECHPARTNER.find(a=>String(a.email||"").toLowerCase().startsWith(t(d.betreuer).toLowerCase()+"@"));
+  if(ap) Object.assign(S.absender, ap);
+}
+// Läuft als Lesezeichen auf der Nina-Seite, nicht hier. Ohne Kommentare im Inneren: Browser können Zeilenumbrüche im Lesezeichen entfernen.
+// Name2 der Firma enthält teils „z. Hd. …“ – das gehört nicht zum Firmennamen.
+async function ninaLesezeichen(){
+  const G = "__GENERATOR__";
+  const v = (d,n)=>{ const e=d.querySelector('[name="VM.'+n+'"]'); return e?e.value.trim():""; };
+  const m = location.pathname.match(/ansprechpartneredit\/(\d+)/i);
+  if(!m || !(v(document,"Name1")||v(document,"EMail"))){ alert("Bitte zuerst die Ansprechpartner-Seite in Nina öffnen und warten, bis sie geladen ist."); return; }
+  const a = document.querySelector('a[href*="kundenedit/" i]');
+  const data = { typ:"ppedv-nina", v:1, id:m[1], anrede:v(document,"Anrede"), vorname:v(document,"Name2"), nachname:v(document,"Name1"), email:v(document,"EMail"), firma:a?a.textContent.trim():"" };
+  if(a){
+    const f = document.createElement("iframe");
+    f.style.cssText = "position:fixed;left:-9999px;width:1200px;height:800px";
+    f.src = a.href; document.body.append(f);
+    let d;
+    for(let i=0;i<75;i++){ await new Promise(r=>setTimeout(r,200)); d=f.contentDocument; if(d&&v(d,"Name1")) break; }
+    if(d&&v(d,"Name1")){
+      const n2 = v(d,"Name2");
+      data.firma = v(d,"Name1")+(n2&&!/^(z\.?\s*H|c\/o|attn|herr|frau)/i.test(n2)?" "+n2:"");
+      data.strasse = v(d,"Straße"); data.plz = v(d,"Plz"); data.ort = v(d,"Ort"); data.land = v(d,"Land");
+      const u = v(d,"Bemerkung").match(/\b(ATU\s?\d{8}|CHE[-.\s]?\d{3}\.?\d{3}\.?\d{3})/i);
+      data.uid = u?u[1].replace(/\s/g,"").toUpperCase():"";
+      const b = d.querySelector(".badge.bg-success"); data.betreuer = b?b.textContent.trim():"";
+    }else alert("Die Firmenadresse konnte nicht gelesen werden. Bitte im Angebot ergänzen.");
+    f.remove();
+  }
+  const code = btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  const weiter = setTimeout(()=>{ location.href = G+"/#nina="+code; }, opener?800:0);
+  addEventListener("message", e=>{ if(e.origin===G&&e.data==="ppedv-nina-ok"){ clearTimeout(weiter); close(); } });
+  if(opener) opener.postMessage(data, G);
 }
 // Neues Inhouse-Angebot mit den Kundendaten des Leads (Absender bleibt erhalten)
 function angebotAusLead(d, alt){
@@ -1024,33 +1116,40 @@ function render(){
   // Optionale Zusatzleistungen aus der ppedv-Angebotsvorlage
   const zusatz = "Optional zuzüglich: virtuelle Maschinen 29 € je Person und Tag (bei Bedarf)"+(kat==="oeffentlich"&&sch.vorbereitung?"":"; Trainer-Vorbereitung bei größeren inhaltlichen Anpassungen nach Aufwand")+".";
   // Kursplan mit Agenda je Kurs – bei vielen Kursen über mehrere Seiten
-  const mitAgenda = mx && mx.kurse.some(c=>c.ag && c.ag.length);
-  const proSeite = mitAgenda ? 12 : 18;
-  const kursZeile = (c,i)=>`<tr><td>${i+1}</td><td>${esc(c.n)}${c.pflicht?" <em>immer dabei</em>":""}${mitAgenda?`<div class="agl">${esc(c.ag&&c.ag.length?c.ag.join(" · "):"Inhalte laut Kursbeschreibung auf ppedv.de")}</div>`:""}</td><td>${esc(c.t||"")}</td><td>${esc(c.ort||"")}</td><td>${esc(c.team||"")}${c.tn?` <small>(${esc(c.tn)}${durchgaenge(c.tn)>1?" · "+durchgaenge(c.tn)+" Durchgänge":""}${zusatzPersonen(c.tn)?" · "+zusatzPersonen(c.tn)+" mit Aufpreis":""})</small>`:""}</td><td class="pr">${kursPreisZelle(c)}</td></tr>`;
+  const hatAgenda = mx && mx.kurse.some(c=>c.ag && c.ag.length);
+  const kursZeile = (c,i,mitAgenda)=>`<tr><td>${i+1}</td><td>${esc(c.n)}${c.pflicht?" <em>immer dabei</em>":""}${mitAgenda?`<div class="agl">${esc(c.ag&&c.ag.length?c.ag.join(" · "):"Inhalte laut Kursbeschreibung auf ppedv.de")}</div>`:""}</td><td>${esc(c.t||"")}</td><td>${esc(c.ort||"")}</td><td>${esc(c.team||"")}${c.tn?` <small>(${esc(c.tn)}${durchgaenge(c.tn)>1?" · "+durchgaenge(c.tn)+" Durchgänge":""}${zusatzPersonen(c.tn)?" · "+zusatzPersonen(c.tn)+" mit Aufpreis":""})</small>`:""}</td><td class="pr">${kursPreisZelle(c)}</td></tr>`;
   // Preis je Kurs im Kursplan: Tage × Tagessatz, weitere Durchgänge −20 %, Aufpreis – damit jeder Betrag nachvollziehbar ist
   function kursPreisZelle(c){
     const t=schulungstage(c.t), p=num(sch.preis), dg=durchgaenge(c.tn), zp=zusatzPersonen(c.tn), w=Math.round(p*(1-PREIS.wiederholRabatt));
     const summe = t*p + (dg-1)*t*w + zp*t*PREIS.aufpreisPersonTag;
-    let h=`<b>${eur(summe)}</b><small>${zahl(t)} ${t==1?"Tag":"Tage"} × ${eur(p)}</small>`;
+    let h=`<b>${eur(summe)}</b><small class="rech">${zahl(t)} ${t==1?"Tag":"Tage"} × ${eur(p)}</small>`;
     if(dg>1) h+=`<small>+ ${dg-1>1?(dg-1)+" weitere Durchgänge":"2. Durchgang"} ${eur((dg-1)*t*w)} (−20 %)</small>`;
     if(zp) h+=`<small>+ Aufpreis ${zp} Pers. ${eur(zp*t*PREIS.aufpreisPersonTag)}</small>`;
     return h;
   }
-  const planTeile = [];
-  if(mx) for(let i=0;i<mxN;i+=proSeite) planTeile.push(`
-    <div class="kicker">Ihr Kursplan${i?" (Fortsetzung)":""}</div>
-    <h3 class="sec" style="margin-bottom:2.5mm">${i?"Kurse "+(i+1)+"–"+Math.min(mxN,i+proSeite):mxN+" "+(mxN==1?"Kurs":"Kurse")+" nach Priorität"}</h3>
+  const kursplan = (von,bis,mitAgenda)=>`
+    <div class="kicker">Ihr Kursplan${von?" (Fortsetzung)":""}</div>
+    <h3 class="sec" style="margin-bottom:2mm">${von?"Kurse "+(von+1)+"–"+bis:mxN+" "+(mxN==1?"Kurs":"Kurse")+" nach Priorität"}</h3>
     <table class="plan">
-      <tr><th>#</th><th>Kurs und Inhalte</th><th>Dauer</th><th>Ort</th><th>Team</th><th class="pr">Preis netto</th></tr>
-      ${mx.kurse.slice(i,i+proSeite).map((c,j)=>kursZeile(c,i+j)).join("")}
-    </table>`);
-  // Ablauf passt mit auf die letzte Kursplan-Seite, wenn dort wenig steht
-  const restLetzte = mx ? mxN-(planTeile.length-1)*proSeite : 0;
-  const ablaufBeiPlan = mx && restLetzte <= proSeite/2;
+      <tr><th>#</th><th>Kurs${mitAgenda?" und Inhalte":""}</th><th>Dauer</th><th>Ort</th><th>Team</th><th class="pr">Preis netto</th></tr>
+      ${mx.kurse.slice(von,bis).map((c,j)=>kursZeile(c,von+j,mitAgenda)).join("")}
+    </table>`;
   const ablaufKicker = kat==="kompetenz" ? "Projektablauf" : "Der Workshop-Tag";
   const ablaufTitel = kat==="kompetenz" ? "In vier Phasen vom Plan in den Alltag" : "So entsteht Ihr verlässlicher Ablauf";
-  const total = 1 + (mx ? planTeile.length + 1 : 1);
   const pHinweis = [reiseHinweis, S.preis.hinweis, zusatz].filter(Boolean).join(" ");
+
+  const ablauf = `
+    ${steps.length?`
+    <div class="kicker">${ablaufKicker}</div>
+    <h3 class="sec">${ablaufTitel}</h3>
+    <p class="sec-sub">${esc(p.stepsIntro)}</p>
+    <div class="steps">
+      ${steps.map((r,i)=>`<div class="step"><div class="n">${i+1}</div><div><b>${esc(r[0])}</b><span>${esc(r[1]||"")}</span></div></div>`).join("")}
+    </div>`:""}
+
+    ${p.zielgruppe?`<div class="target"><b>Zielgruppe:</b> ${esc(p.zielgruppe)}</div>`:""}`;
+
+  const fakten = (breit)=>`<dl class="facts${breit?" breit":""}">${rahmen.map(r=>`<dt>${esc(r[0])}</dt><dd>${esc(r[1]||"")}</dd>`).join("")}</dl>`;
 
   const page1 = `
   <section class="page"><div class="topbar"></div><div class="inner">
@@ -1092,6 +1191,8 @@ function render(){
       ${nutzen.map(r=>`<div class="it"><div class="p">${esc(r[0])}</div><div class="arr">→</div><div class="s"><b>${esc(r[1])}</b><span>${esc(r[2]||"")}</span></div></div>`).join("")}
     </div>`:""}
 
+    ${mx?ablauf+`<div class="kicker">Rahmendaten</div>`+fakten(true):""}
+
     <div class="price-teaser">
       <div class="l"><b>Ihre Investition</b>${esc(teaser)}${reise?" · inkl. Reisekosten":""}${ersparnis?`<em class="spar">Sie sparen ${eur(ersparnis)} (${esc(rabatte.map(x=>x.t).join(", "))})</em>`:""}</div>
       <div class="r">${ersparnis?`<s>${eur(netto+ersparnis)}</s>`:""}<b>${eur(netto)}</b><span>${esc(ustText)}</span></div>
@@ -1101,30 +1202,19 @@ function render(){
       <div><i>2</i><span><b>Vorgespräch und Terminfixierung</b>${kat==="oeffentlich"?"Schwerpunkte abstimmen und Termin festlegen":kat==="kompetenz"?"Ziele abstimmen und Termine festlegen":"Praxisfall abstimmen und Termin festlegen"}</span></div>
       <div><i>3</i><span><b>Kompetenzen aneignen</b>${kat==="kompetenz"?"vor Ort und online, über mehrere Monate":esc(formatText(S))}</span></div>
     </div>
-  </div>${footer(1,total)}</section>`;
+  </div>${footer(1,2)}</section>`;
 
   const folgeseite = (n,inhalt)=>`
   <section class="page"><div class="topbar"></div><div class="inner">
     <div class="head"><img src="${LOGO}" alt="ppedv" style="height:8mm"><div class="sender">${nr?esc(nr)+" · ":""}${esc(k.firma)}</div></div>
     ${inhalt}
-  </div>${footer(n,total)}</section>`;
-
-  const ablauf = `
-    ${steps.length?`
-    <div class="kicker">${ablaufKicker}</div>
-    <h3 class="sec">${ablaufTitel}</h3>
-    <p class="sec-sub">${esc(p.stepsIntro)}</p>
-    <div class="steps">
-      ${steps.map((r,i)=>`<div class="step"><div class="n">${i+1}</div><div><b>${esc(r[0])}</b><span>${esc(r[1]||"")}</span></div></div>`).join("")}
-    </div>`:""}
-
-    ${p.zielgruppe?`<div class="target"><b>Zielgruppe:</b> ${esc(p.zielgruppe)}</div>`:""}`;
+  </div>${footer(n,2)}</section>`;
 
   const konditionen = `
     <div class="kicker">Konditionen</div>
-    <h3 class="sec" style="margin-bottom:3mm">Rahmendaten & Preisübersicht</h3>
-    <div class="two">
-      <dl class="facts">${rahmen.map(r=>`<dt>${esc(r[0])}</dt><dd>${esc(r[1]||"")}</dd>`).join("")}</dl>
+    <h3 class="sec" style="margin-bottom:2.5mm">${mx?"Preisübersicht":"Rahmendaten & Preisübersicht"}</h3>
+    <div class="${mx?"":"two"}">
+      ${mx?"":fakten()}
       <div>
         <table class="price">
           <tr><th>Leistung</th><th class="num">Betrag</th></tr>
@@ -1145,44 +1235,61 @@ function render(){
     <div class="cond">Dieses Angebot ist <b>${esc(a.gueltig)} Tage gültig</b> (bis ${esc(dfmt(addDays(a.datum,a.gueltig)))}). ${esc(ustSatz)} Zahlungsbedingung: monatlich nach Leistungserbringung, 10 Tage netto. Es gelten die <a href="${FIRMA.agb}">Allgemeinen Geschäftsbedingungen</a> der ppedv AG.
     ${link?`<div class="link">Weitere Informationen: <a href="${esc(link)}">${esc(link.replace(/^https?:\/\//,""))}</a></div>`:""}</div>
 
-    <div class="close">
+    <div class="schluss">
       <div class="sig">
-        <p>Für Fragen, Wünsche oder Anregungen erreichen Sie mich direkt unter ${esc(S.absender.tel)}${S.absender.email?" oder "+esc(S.absender.email):""}.</p>
+        <p>Bei Fragen erreichen Sie mich direkt.</p>
         <p>Mit freundlichen Grüßen</p>
         <div class="name">${S.absender.iv?'<span style="font-weight:400;color:var(--muted)">i.V. </span>':""}${esc(S.absender.name)}</div>
-        <div class="role">${esc([S.absender.rolle, FIRMA.name].filter(Boolean).join(" · "))}</div>
-        <div class="role">${esc([S.absender.tel?"Tel. "+S.absender.tel:"", S.absender.email].filter(Boolean).join(" · "))}</div>
+        <div class="role">${esc(S.absender.rolle||"")}</div>
+        <div class="role">${esc(FIRMA.name)}</div>
+        ${S.absender.tel?`<div class="role">Tel. ${esc(S.absender.tel)}</div>`:""}
+        ${S.absender.email?`<div class="role">${esc(S.absender.email)}</div>`:""}
       </div>
-    </div>
-    <div class="auftrag">
-      <div class="kicker" style="margin-top:0">Auftragserteilung</div>
-      <p>Hiermit beauftragen wir die ppedv AG gemäß diesem Angebot${nr?" Nr. "+esc(nr):""} vom ${esc(dfmt(a.datum))}${k.firma?" – "+esc(k.firma):""}.</p>
-      <div class="ulinien">
-        <div><span></span>Ort, Datum</div>
-        <div><span></span>Unterschrift und Firmenstempel des Auftraggebers</div>
+      <div class="auftrag">
+        <div class="kicker" style="margin-top:0">Auftragserteilung</div>
+        <p>Hiermit beauftragen wir die ppedv AG gemäß diesem Angebot${nr?" Nr. "+esc(nr):""} vom ${esc(dfmt(a.datum))}${k.firma?" – "+esc(k.firma):""}.</p>
+        <div class="ulinien">
+          <div><span></span>Ort, Datum</div>
+          <div><span></span>Unterschrift und Firmenstempel des Auftraggebers</div>
+        </div>
+        <div class="ulinien u2">
+          <div><span></span>Name in Druckbuchstaben</div>
+          <div><span></span>Funktion</div>
+        </div>
+        <p class="zurueck">Bitte unterschrieben zurück an ${esc(S.absender.email||FIRMA.mail)}</p>
       </div>
-      <div class="ulinien u2">
-        <div><span></span>Name in Druckbuchstaben</div>
-        <div><span></span>Funktion</div>
-      </div>
-      <p class="zurueck">Bitte unterschrieben zurück an ${esc(S.absender.email||FIRMA.mail)}</p>
     </div>`;
 
   const pages = document.getElementById("pages");
-  // Langer Kursplan (> 14 Kurse) bekommt Seite 2 für sich, der Ablauf rückt zu den Konditionen
-  pages.innerHTML = page1 + (!mx ? folgeseite(2, ablauf+konditionen)
-    : planTeile.map((t,i)=>folgeseite(2+i, t+(ablaufBeiPlan&&i===planTeile.length-1?ablauf:""))).join("")
-      + folgeseite(total, (ablaufBeiPlan?"":ablauf)+konditionen));
-  document.title = dateiname(S);   // wird beim PDF-Druck und beim JSON-Speichern als Dateiname verwendet
-  const ni = document.getElementById("nrInput"), nh = document.getElementById("nrHint");
-  if(ni){ ni.classList.toggle("need", !nr); nh.classList.toggle("need", !nr); nh.textContent = nr ? "Dateiname: „"+document.title+"“" : "Pflichtfeld: Die Nummer erscheint im Angebot und im Dateinamen."; }
-  // Passt die Auftragserteilung nicht mehr auf die letzte Seite, bekommt sie eine eigene Seite
-  const letzte = [...pages.querySelectorAll(".page")].pop(), li = letzte.querySelector(".inner"), auftrag = li.querySelector(".auftrag");
-  if(auftrag && li.scrollHeight > li.clientHeight + 1){
-    pages.insertAdjacentHTML("beforeend", folgeseite(total+1, ""));
-    [...pages.querySelectorAll(".page")].pop().querySelector(".inner").appendChild(auftrag);
+  // Immer 2 Seiten: erst normal, dann enger, ohne Modulliste im Kursplan, noch enger
+  // gemessen in Originalgröße wie beim Drucken, nicht im Zoom der Vorschau
+  const vorschauZoom = pages.style.zoom;
+  pages.style.zoom = 1;
+  const zuLang = ()=>[...pages.querySelectorAll(".inner")].some(i=>i.scrollHeight > i.clientHeight);
+  const baue = stufe=>{
+    pages.classList.toggle("eng", stufe>=1);
+    pages.classList.toggle("eng2", stufe>=3);
+    pages.innerHTML = page1 + folgeseite(2, (mx ? kursplan(0,mxN,hatAgenda&&stufe<2) : ablauf) + konditionen);
+  };
+  let stufe = 0;
+  baue(0);
+  while(zuLang() && stufe<3) baue(++stufe);
+  // Nur bei sehr vielen Kursen reicht das nicht: dann läuft der Kursplan über eine eigene Seite weiter
+  if(mx && zuLang()){
+    const proSeite = 40, teile = [];
+    for(let i=0;i<mxN;i+=proSeite) teile.push(folgeseite(2+teile.length, kursplan(i,Math.min(mxN,i+proSeite),false)));
+    pages.innerHTML = page1 + teile.join("") + folgeseite(2+teile.length, konditionen);
     pages.querySelectorAll(".page .pg").forEach((el,i,all)=>el.textContent="Seite "+(i+1)+"/"+all.length);
   }
+  // Freien Platz auf der letzten Seite bekommt die Unterschrift (bis 28 mm)
+  const schluss = pages.querySelector(".schluss"), linie = schluss.querySelector(".ulinien");
+  const frei = schluss.closest(".inner").getBoundingClientRect().bottom - schluss.getBoundingClientRect().bottom, oben = parseFloat(getComputedStyle(linie).marginTop);
+  if(frei>4) linie.style.marginTop = Math.max(oben, Math.min(oben+frei-4, 28*96/25.4))+"px";
+  pages.style.zoom = vorschauZoom;
+  document.title = dateiname(S);   // wird beim PDF-Druck und beim JSON-Speichern als Dateiname verwendet
+  const ni = document.getElementById("nrInput"), nh = document.getElementById("nrHint");
+  document.getElementById("ninaHint").textContent = kundeVeraltet() ? "Kundendaten gehören noch zu „"+S.kunde.firma+"“ – bitte „Aus Nina holen“." : "";
+  if(ni){ ni.classList.toggle("need", !nr); nh.classList.toggle("need", !nr); nh.textContent = nr ? "Dateiname: „"+document.title+"“" : "Pflichtfeld: Die Nummer erscheint im Angebot und im Dateinamen."; }
   // overflow check
   pages.querySelectorAll(".page").forEach(pg=>{
     const inner = pg.querySelector(".inner");
@@ -1290,6 +1397,9 @@ function fillForm(){
 
 document.getElementById("form").addEventListener("input", e=>{
   const el=e.target; if(!el.dataset.k) return;
+  // ID geändert, Kundendaten noch vom alten Kunden → Hinweis; Kundendaten von Hand geändert → kein Hinweis mehr
+  if(el.dataset.k==="kunde.kundennr" && S.kunde.quelleNr==null && S.kunde.firma && S.kunde.kundennr) S.kunde.quelleNr = S.kunde.kundennr;
+  if(el.dataset.k==="kunde.firma") S.kunde.quelleNr = null;
   set(S, el.dataset.k, el.type==="checkbox"?el.checked:(el.type==="number"?(el.value===""?"":+el.value):el.value));
   // Details selbst bearbeitet → nicht mehr automatisch überschreiben (leeres Feld = wieder automatisch)
   if(/^details\.(technik|vorkenntnisse|voraussetzungen)$/.test(el.dataset.k)){ const d=S.details, k=el.dataset.k.split(".")[1]; (d._manual||(d._manual={}))[k]=el.value.trim()!==""; }
@@ -1325,8 +1435,26 @@ document.querySelectorAll("[data-kat]").forEach(b=>b.addEventListener("click",()
 document.getElementById("kursliste").innerHTML = KURSE.map(k=>`<option value="${esc(k.name)}">${k.tage<1?"½ Tag":tageText(k.tage)}</option>`).join("");
 document.getElementById("bPrint").onclick = ()=>{
   if(!angebotsNr(S) && !confirm("Es ist keine Kunden-/Angebotsnummer eingetragen.\nTrotzdem PDF erstellen?")){ document.getElementById("nrInput").focus(); return; }
+  if(kundeVeraltet() && !confirm("Die Kundendaten gehören noch zu "+S.kunde.firma+", die Nummer wurde aber geändert.\nTrotzdem PDF erstellen?")){ document.getElementById("nrInput").focus(); return; }
   window.print();
 };
+function kundeVeraltet(){ const q=S.kunde.quelleNr; return q!=null && !!S.kunde.firma && ninaId(q)!==ninaId(S.kunde.kundennr); }
+function ninaHolen(){
+  const id = ninaId(S.kunde.kundennr);
+  if(!id){ document.getElementById("nrInput").focus(); return; }
+  window.open(NINA+"/ppcompany/adressen/ansprechpartneredit/"+id, "ppedvNina");
+}
+document.getElementById("ninaGo").onclick = ninaHolen;
+document.getElementById("nrInput").addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); ninaHolen(); } });
+const ninaBm = document.getElementById("ninaBm");
+ninaBm.href = "javascript:"+encodeURIComponent("("+ninaLesezeichen.toString().replace("__GENERATOR__",location.origin)+")()");
+ninaBm.onclick = e=>{ e.preventDefault(); alert("Dieses Feld in die Lesezeichenleiste ziehen – nicht anklicken."); };
+window.addEventListener("message", e=>{
+  if(e.origin!==NINA || !e.data || e.data.typ!=="ppedv-nina") return;
+  ausNina(e.data); fillForm(); render();
+  if(e.source) e.source.postMessage("ppedv-nina-ok", e.origin);
+  window.focus();
+});
 document.getElementById("bNew").onclick = ()=>{ if(confirm("Alle Eingaben verwerfen und neu beginnen?")){ S=blank(); fillForm(); render(); } };
 document.getElementById("bSave").onclick = ()=>{
   const blob = new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
@@ -1383,6 +1511,9 @@ function fromHash(){
     if(mxd){ S=angebotAusMatrix(mxd,S); history.replaceState(null,"",location.pathname+location.search); }
     // Aufruf aus dem Powerdialer: neues Inhouse-Angebot mit den Kundendaten
     if(ld){ S=angebotAusLead(ld,S); history.replaceState(null,"",location.pathname+location.search); }
+    // Aufruf aus Nina (Lesezeichen, wenn kein Generator-Tab offen war)
+    const nm=location.hash.match(/nina=([A-Za-z0-9_-]+)/);
+    if(nm){ try{ const d=b64urlJson(nm[1]); if(d.typ==="ppedv-nina") ausNina(d); }catch(e){ alert("Daten aus Nina konnten nicht gelesen werden."); } history.replaceState(null,"",location.pathname+location.search); }
     try{ const z=localStorage.getItem(STORE+"-zoom"); if(z) zoomSel.value=z; }catch(e){}
   }
   fillForm(); render(); applyZoom();
