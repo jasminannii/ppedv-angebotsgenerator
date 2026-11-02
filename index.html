@@ -314,8 +314,9 @@ table.plan td.pr small{display:block;font-size:6.6pt;color:var(--muted)}
         <label>Ansprechpartner-ID oder Kartennummer aus Nina = Angebots-Nr. <small>(Pflichtfeld)</small></label>
         <div style="display:flex;gap:6px"><input data-k="kunde.kundennr" id="nrInput" placeholder="z. B. 92492156" autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn2" id="ninaGo">Aus Nina holen</button></div>
         <p class="hint need" id="ninaHint"></p>
-        <details style="margin-top:4px"><summary class="hint" style="cursor:pointer">Einmalig einrichten</summary>
-          <p class="hint"><a id="ninaBm" href="#" draggable="true" style="display:inline-block;background:var(--orange);color:#fff;border-radius:6px;padding:2px 8px;font-weight:600;text-decoration:none">Nina → Angebot</a> in die Lesezeichenleiste ziehen (Strg+Umschalt+B blendet sie ein). Danach: „Aus Nina holen“, dann in Nina auf das Lesezeichen klicken.</p>
+        <details id="ninaSetup" style="margin-top:4px"><summary class="hint" style="cursor:pointer">Einmalig einrichten</summary>
+          <p class="hint"><b>Ohne Klick in Nina:</b> <a href="nina-erweiterung.zip">Erweiterung laden</a> und entpacken. In Edge <code>edge://extensions</code> öffnen, „Entwicklermodus“ einschalten, „Entpackte Erweiterung laden“ und den Ordner wählen. Seite neu laden.</p>
+          <p class="hint"><b>Oder als Lesezeichen:</b> <a id="ninaBm" href="#" draggable="true" style="display:inline-block;background:var(--orange);color:#fff;border-radius:6px;padding:2px 8px;font-weight:600;text-decoration:none">Nina → Angebot</a> in die Lesezeichenleiste ziehen (Strg+Umschalt+B blendet sie ein). Danach: „Aus Nina holen“, dann in Nina auf das Lesezeichen klicken.</p>
         </details>
         <p class="hint" id="nrHint"></p>
         <div class="row">
@@ -760,6 +761,7 @@ function leseLead(text){
 // Nina hat keine Schnittstelle. Das Lesezeichen „Nina → Angebot“ läuft im angemeldeten Browser der Person auf der
 // Ansprechpartner-Seite, liest dort die Felder und schickt sie direkt an den Generator; es geht an keinen Server.
 const NINA = "https://nina.ppedv.de";
+let ninaStatus = "", ninaLaeuft = "";
 const NINA_LAND = { A:"Österreich", AT:"Österreich", D:"Deutschland", DE:"Deutschland", CH:"Schweiz", FL:"Liechtenstein", LI:"Liechtenstein", L:"Luxemburg", LU:"Luxemburg", NL:"Niederlande", B:"Belgien", BE:"Belgien", I:"Italien", IT:"Italien", F:"Frankreich", FR:"Frankreich" };
 // Die Kartennummer in Nina ist die Ansprechpartner-ID + 3 Ziffern (92492156 → 92492)
 function ninaId(nr){ const z = String(nr||"").replace(/\D/g,""); return z.length>=8 ? z.slice(0,-3) : z; }
@@ -1288,7 +1290,7 @@ function render(){
   pages.style.zoom = vorschauZoom;
   document.title = dateiname(S);   // wird beim PDF-Druck und beim JSON-Speichern als Dateiname verwendet
   const ni = document.getElementById("nrInput"), nh = document.getElementById("nrHint");
-  document.getElementById("ninaHint").textContent = kundeVeraltet() ? "Kundendaten gehören noch zu „"+S.kunde.firma+"“ – bitte „Aus Nina holen“." : "";
+  document.getElementById("ninaHint").textContent = ninaStatus || kundeVeraltet() && "Kundendaten gehören noch zu „"+S.kunde.firma+"“ – bitte „Aus Nina holen“." || "";
   if(ni){ ni.classList.toggle("need", !nr); nh.classList.toggle("need", !nr); nh.textContent = nr ? "Dateiname: „"+document.title+"“" : "Pflichtfeld: Die Nummer erscheint im Angebot und im Dateinamen."; }
   // overflow check
   pages.querySelectorAll(".page").forEach(pg=>{
@@ -1400,6 +1402,7 @@ document.getElementById("form").addEventListener("input", e=>{
   // ID geändert, Kundendaten noch vom alten Kunden → Hinweis; Kundendaten von Hand geändert → kein Hinweis mehr
   if(el.dataset.k==="kunde.kundennr" && S.kunde.quelleNr==null && S.kunde.firma && S.kunde.kundennr) S.kunde.quelleNr = S.kunde.kundennr;
   if(el.dataset.k==="kunde.firma") S.kunde.quelleNr = null;
+  if(el.dataset.k==="kunde.kundennr") ninaStatus = "";
   set(S, el.dataset.k, el.type==="checkbox"?el.checked:(el.type==="number"?(el.value===""?"":+el.value):el.value));
   // Details selbst bearbeitet → nicht mehr automatisch überschreiben (leeres Feld = wieder automatisch)
   if(/^details\.(technik|vorkenntnisse|voraussetzungen)$/.test(el.dataset.k)){ const d=S.details, k=el.dataset.k.split(".")[1]; (d._manual||(d._manual={}))[k]=el.value.trim()!==""; }
@@ -1439,13 +1442,28 @@ document.getElementById("bPrint").onclick = ()=>{
   window.print();
 };
 function kundeVeraltet(){ const q=S.kunde.quelleNr; return q!=null && !!S.kunde.firma && ninaId(q)!==ninaId(S.kunde.kundennr); }
+function hatErweiterung(){ return document.documentElement.dataset.ppedvNina==="1"; }
 function ninaHolen(){
   const id = ninaId(S.kunde.kundennr);
   if(!id){ document.getElementById("nrInput").focus(); return; }
-  window.open(NINA+"/ppcompany/adressen/ansprechpartneredit/"+id, "ppedvNina");
+  if(!hatErweiterung()){ window.open(NINA+"/ppcompany/adressen/ansprechpartneredit/"+id, "ppedvNina"); return; }
+  if(ninaLaeuft===id) return;
+  ninaLaeuft = id; ninaStatus = "Hole Daten aus Nina …"; render();
+  window.postMessage({ typ:"ppedv-nina-anfrage", id }, location.origin);
 }
 document.getElementById("ninaGo").onclick = ninaHolen;
 document.getElementById("nrInput").addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); ninaHolen(); } });
+// Mit Erweiterung reicht die Eingabe: beim Verlassen des Felds holen, sofern keine (oder noch alte) Kundendaten drinstehen
+document.getElementById("nrInput").addEventListener("change", ()=>{ if(hatErweiterung() && (!S.kunde.firma || kundeVeraltet())) ninaHolen(); });
+document.getElementById("ninaSetup").hidden = hatErweiterung();
+window.addEventListener("message", e=>{
+  if(e.source!==window || e.origin!==location.origin || !e.data || e.data.typ!=="ppedv-nina-antwort") return;
+  if(ninaLaeuft===e.data.id) ninaLaeuft = "";
+  if(e.data.id!==ninaId(S.kunde.kundennr)) return;   // Nummer wurde inzwischen geändert
+  ninaStatus = e.data.fehler || e.data.hinweis || "";
+  if(!e.data.fehler){ ausNina(e.data); fillForm(); }
+  render();
+});
 const ninaBm = document.getElementById("ninaBm");
 ninaBm.href = "javascript:"+encodeURIComponent("("+ninaLesezeichen.toString().replace("__GENERATOR__",location.origin)+")()");
 ninaBm.onclick = e=>{ e.preventDefault(); alert("Dieses Feld in die Lesezeichenleiste ziehen – nicht anklicken."); };

@@ -24,8 +24,14 @@ Die Daten stehen hinter dem `#` und gehen an keinen Server.
 
 ## Übernahme aus Nina
 
-Nina hat keine Schnittstelle (Blazor Server, Login über Microsoft). Darum: Lesezeichen „Nina → Angebot“
-(`ninaLesezeichen()`, einmalig aus Schritt 2 in die Lesezeichenleiste ziehen).
+Nina hat keine Schnittstelle (Blazor Server, Login über Microsoft). Zwei Wege, beide einmalig einzurichten (Schritt 2):
+
+**Browser-Erweiterung (`nina-erweiterung/`, empfohlen):** Nummer eingeben, Feld verlassen oder Enter – die Daten kommen ohne
+Klick in Nina. Sie öffnet die Nina-Seiten kurz in einem Tab im Hintergrund und schließt ihn wieder. Läuft nur mit Zugriff auf
+nina.ppedv.de und den Generator. Installation: `edge://extensions` → Entwicklermodus → „Entpackte Erweiterung laden“.
+Für das ganze Team sauberer: IT verteilt sie per Richtlinie. Nach Änderungen im Ordner `nina-erweiterung.zip` neu packen.
+
+**Lesezeichen „Nina → Angebot“ (`ninaLesezeichen()`), falls keine Erweiterung erlaubt ist:**
 
 1. Im Generator Nummer eintragen → „Aus Nina holen“ (oder Enter) öffnet die Ansprechpartner-Seite
 2. In Nina auf das Lesezeichen klicken → Ansprechpartner, Firma, Adresse, Land, UID (aus der Bemerkung) und

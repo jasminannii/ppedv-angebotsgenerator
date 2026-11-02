@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "ppedv Angebot – Nina",
+  "version": "1.0",
+  "description": "Holt die Kundendaten zur eingegebenen Nummer aus Nina in den ppedv Angebotsgenerator.",
+  "permissions": ["scripting"],
+  "host_permissions": ["https://nina.ppedv.de/*"],
+  "background": { "service_worker": "hintergrund.js" },
+  "content_scripts": [{
+    "matches": ["https://ppedv-angebotsgenerator.vercel.app/*"],
+    "js": ["bruecke.js"],
+    "run_at": "document_start"
+  }]
+}
