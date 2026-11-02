@@ -15,6 +15,13 @@ A4-Vorschau; „PDF erstellen“ → im Druckdialog „Als PDF speichern“.
 
 Alle Preise sind vorausgewählt und im Formular änderbar (`PREIS` im Code).
 
+## Übergabe aus dem Powerdialer
+
+Der lokale Powerdialer öffnet `<Generator-Adresse>/#lead=<base64url(JSON)>` mit
+`{typ:"ppedv-lead",v:1,kunde:{firma,anrede,vorname,nachname,strasse,plz,ort,land,email}}`.
+Daraus entsteht ein neues Inhouse-Angebot. Lesen: `leseLead()` / `angebotAusLead()`.
+Die Daten stehen hinter dem `#` und gehen an keinen Server.
+
 ## Übergabe aus der Kompetenzmatrix
 
 Die Matrix öffnet `<Generator-Adresse>/#matrix=<base64url(JSON)>`. Die Daten stehen hinter dem `#`

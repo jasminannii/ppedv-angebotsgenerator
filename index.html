@@ -703,6 +703,26 @@ function angebotAusMatrix(d, alt){
   s.produkt.steps = (s.matrix.phasen||[]).map(p=>(p.t||"")+" | "+ungendern(p.ziel||"")).join("\n");
   return s;
 }
+// ---------- Übergabe aus dem Powerdialer ----------
+// Der Dialer öffnet …#lead=<base64url(JSON)>. Auch das steht hinter dem „#“ und geht an keinen Server.
+function leseLead(text){
+  const m = String(text||"").match(/lead=([A-Za-z0-9_-]+)/);
+  let d=null; try{ d = b64urlJson(m ? m[1] : ""); }catch(e){}
+  if(!d || d.typ!=="ppedv-lead" || !d.kunde) throw new Error("Das ist kein Link aus dem Powerdialer.");
+  return d;
+}
+// Neues Inhouse-Angebot mit den Kundendaten des Leads (Absender bleibt erhalten)
+function angebotAusLead(d, alt){
+  const s = blank();
+  if(alt) s.absender = JSON.parse(JSON.stringify(alt.absender));
+  const kd = d.kunde;
+  s.kunde = Object.assign(s.kunde, {
+    firma: kd.firma||"", anrede: kd.anrede==="Herr"||kd.anrede==="Frau" ? kd.anrede : "",
+    vorname: kd.vorname||"", nachname: kd.nachname||"", strasse: kd.strasse||"",
+    plz: kd.plz||"", ort: kd.ort||"", land: kd.land||"Deutschland", email: kd.email||""
+  });
+  return s;
+}
 // ppedv gendert nicht: Texte aus der Matrix für das Angebot angleichen
 function ungendern(t){ return String(t).replace(/Teilnehmende(n?)/g,"Teilnehmer").replace(/Mitarbeitende(n?)/g,"Mitarbeiter"); }
 // Kurstage aus der Dauer („2 Tage“, „1 Tag“, „90 Min.“ → 1)
@@ -1354,12 +1374,15 @@ function fromHash(){
 (function init(){
   let h=null; try{ h=fromHash(); }catch(e){ console.error(e); }
   let mxd=null; try{ if(/matrix=/.test(location.hash)) mxd=leseMatrix(location.hash); }catch(e){ alert("Link aus der Kompetenzmatrix konnte nicht gelesen werden: "+e.message); }
+  let ld=null; try{ if(/lead=/.test(location.hash)) ld=leseLead(location.hash); }catch(e){ alert("Link aus dem Powerdialer konnte nicht gelesen werden: "+e.message); }
   if(h){ S=hydrate(h); }
   else{
     let saved=null; try{ saved=JSON.parse(localStorage.getItem(STORE)||"null"); }catch(e){}
     S = saved ? hydrate(saved) : blank();
     // Aufruf aus der Kompetenzmatrix: direkt ein Angebot erstellen, dann den Link aus der Adresszeile nehmen
     if(mxd){ S=angebotAusMatrix(mxd,S); history.replaceState(null,"",location.pathname+location.search); }
+    // Aufruf aus dem Powerdialer: neues Inhouse-Angebot mit den Kundendaten
+    if(ld){ S=angebotAusLead(ld,S); history.replaceState(null,"",location.pathname+location.search); }
     try{ const z=localStorage.getItem(STORE+"-zoom"); if(z) zoomSel.value=z; }catch(e){}
   }
   fillForm(); render(); applyZoom();
