@@ -1,15 +1,15 @@
 # Nina-Schnittstelle für den Angebotsgenerator
 
-**An:** Nina-Team / Geschäftsführung · **Von:** Jasmin Meilner (Sales) · **Stand:** 21.10.2026
+**An:** Nina-Team / Geschäftsführung · **Von:** Jasmin Meilner (Sales) · **Stand:** 02.11.2026
 
 ## Ziel
 
 Im Angebotsgenerator (https://ppedv-angebotsgenerator.vercel.app) gibt der Vertrieb die
 **Ansprechpartner-ID aus Nina** ein (die Nummer aus `…/adressen/ansprechpartneredit/{id}`,
-z. B. 86919). Ansprechpartner, Firma mit Adresse, **Kundennummer** (= Angebotsnummer) und der
+z. B. 86919) – sie ist zugleich die **Angebotsnummer**. Ansprechpartner, Firma mit Adresse und der
 zuständige Betreuer sollen dann automatisch übernommen werden – kein Abtippen, keine veralteten Adressen.
 
-Die Daten gehen **direkt von Nina in den Browser** der angemeldeten Mitarbeiterin.
+Die Daten gehen **direkt von Nina in den Browser** des angemeldeten Mitarbeiters.
 Der Angebotsgenerator hat keinen eigenen Server und speichert nichts zentral.
 
 ## Ist-Stand Nina (von außen gesehen)
@@ -61,7 +61,7 @@ Fehlerfälle: `404` = unbekannte Nummer, `401/403` = nicht angemeldet bzw. keine
    Redirect `https://ppedv-angebotsgenerator.vercel.app`, Berechtigung auf `Angebot.Read`.
 3. Die Abfrage akzeptiert `Authorization: Bearer <Token>` und prüft die übliche Nina-Berechtigung.
 
-Der Generator meldet die Mitarbeiterin mit ihrem Microsoft-365-Konto an (Microsoft-Bibliothek MSAL)
+Der Generator meldet den Mitarbeiter mit seinem Microsoft-365-Konto an (Microsoft-Bibliothek MSAL)
 und schickt das Token mit. Kein eigenes Passwort, keine Weitergabe von Zugangsdaten.
 
 *Alternative:* bestehendes Nina-Login-Cookie mit `credentials: include`. Funktioniert von einer
@@ -85,7 +85,13 @@ kommt diese Adresse dazu.
 - Der Generator speichert nichts zentral; Entwürfe liegen nur im Browser der Person bzw.
   als Datei, die sie selbst ablegt (`\\bgh\sekret\Sales\Inbound\aktiv`).
 
-## Ansprechpartnerin
+## Was wir vom Nina-Team zurückbrauchen
+
+1. Die tatsächliche **Adresse der Abfrage** und eine Beispielantwort (mit Testdaten)
+2. Die **Client-ID** der App-Registrierung für den Generator und den **Bereich** (Scope) der Nina-API
+3. Eine kurze Info, sobald die **CORS-Freigabe** aktiv ist
+
+## Ansprechpartner
 
 Jasmin Meilner, jasminm@ppedv.de, +49 8677 9889-16 – die Gegenseite im Generator
-(Eingabe Kundennummer, Übernahme in die Felder) wird umgesetzt, sobald die Abfrage steht.
+(Eingabe der Ansprechpartner-ID, Übernahme in die Felder) wird umgesetzt, sobald die Abfrage steht.
